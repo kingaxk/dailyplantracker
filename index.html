@@ -227,7 +227,7 @@ const CATEGORY_HEX = {
 const ALL_ITEMS = [];
 CATEGORIES.forEach(cat=>cat.items.forEach(it=>ALL_ITEMS.push({ ...it, catId:cat.id, catName:cat.name })));
 function findItemMeta(itemId){ return ALL_ITEMS.find(it=>it.id===itemId); }
-const SHEET_TAB = "Sheet1";
+let ACTIVE_SHEET_TAB = "Sheet1"; // discovered dynamically at load time, see discoverSheetTab()
 const HEADERS = ["Date","ItemId","Category","ItemName","Done","Note","ExtraJSON","UpdatedAt"];
 
 /* ============================== DATE HELPERS ============================== */
@@ -295,11 +295,28 @@ let syncStatus = "idle";
 
 function keyFor(date,itemId){ return date+"|"+itemId; }
 
+async function discoverSheetTab(spreadsheetId, token){
+  const res = await fetch("https://sheets.googleapis.com/v4/spreadsheets/"+spreadsheetId+"?fields=sheets.properties.title", {
+    headers:{ Authorization:"Bearer "+token },
+  });
+  if(!res.ok){
+    if(res.status===401){ accessToken=null; tokenExpiry=0; throw new Error("reauth_needed"); }
+    if(res.status===403) throw new Error("Brak dostępu do arkusza — sprawdź, czy jesteś zalogowana właściwym kontem Google.");
+    if(res.status===404 || res.status===400) throw new Error("Nie znaleziono arkusza — sprawdź ID arkusza w Ustawieniach.");
+    throw new Error("Błąd HTTP "+res.status);
+  }
+  const data = await res.json();
+  const titles = (data.sheets||[]).map(function(s){ return s.properties && s.properties.title; }).filter(Boolean);
+  if(titles.length===0) throw new Error("Arkusz jest pusty lub nie ma żadnych kart.");
+  ACTIVE_SHEET_TAB = titles[0];
+}
+
 async function loadSheetData(){
   const cfg = loadConfig();
   const token = await ensureTokenSilent();
   if(!token) throw new Error("no_token");
-  const res = await fetch(sheetsUrl(cfg.spreadsheetId, SHEET_TAB+"!A:H"), { headers:{ Authorization:"Bearer "+token } });
+  await discoverSheetTab(cfg.spreadsheetId, token);
+  const res = await fetch(sheetsUrl(cfg.spreadsheetId, ACTIVE_SHEET_TAB+"!A:H"), { headers:{ Authorization:"Bearer "+token } });
   if(!res.ok){
     if(res.status===401){ accessToken=null; tokenExpiry=0; throw new Error("reauth_needed"); }
     if(res.status===403) throw new Error("Brak dostępu do arkusza — sprawdź, czy jesteś zalogowana właściwym kontem Google.");
@@ -311,7 +328,7 @@ async function loadSheetData(){
   sheetRows = [];
   rowIndexMap = {};
   if(values.length===0){
-    await fetch(sheetsUrl(cfg.spreadsheetId, SHEET_TAB+"!A1:H1")+"?valueInputOption=RAW", {
+    await fetch(sheetsUrl(cfg.spreadsheetId, ACTIVE_SHEET_TAB+"!A1:H1")+"?valueInputOption=RAW", {
       method:"PUT", headers:{ Authorization:"Bearer "+token, "Content-Type":"application/json" },
       body: JSON.stringify({ values:[HEADERS] }),
     });
@@ -368,12 +385,12 @@ async function pushRow(date, itemId, category, itemName, done, note, extraObj){
 
     let res;
     if(localRow._rowNum){
-      res = await fetch(sheetsUrl(cfg.spreadsheetId, SHEET_TAB+"!A"+localRow._rowNum+":H"+localRow._rowNum)+"?valueInputOption=RAW", {
+      res = await fetch(sheetsUrl(cfg.spreadsheetId, ACTIVE_SHEET_TAB+"!A"+localRow._rowNum+":H"+localRow._rowNum)+"?valueInputOption=RAW", {
         method:"PUT", headers:{ Authorization:"Bearer "+token, "Content-Type":"application/json" },
         body: JSON.stringify({ values:[rowValues] }),
       });
     } else {
-      res = await fetch(sheetsUrl(cfg.spreadsheetId, SHEET_TAB+"!A:H")+":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", {
+      res = await fetch(sheetsUrl(cfg.spreadsheetId, ACTIVE_SHEET_TAB+"!A:H")+":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", {
         method:"POST", headers:{ Authorization:"Bearer "+token, "Content-Type":"application/json" },
         body: JSON.stringify({ values:[rowValues] }),
       });
