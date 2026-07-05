@@ -582,7 +582,6 @@ function renderSignIn(){
   return '<div class="rd-setup"><h1>Rytuały dnia</h1>' +
     '<p>Zaloguj się swoim kontem Google, żeby połączyć się z Twoim arkuszem.</p>' +
     '<button class="rd-google-btn" data-action="do-signin">Zaloguj się przez Google</button>' +
-    '<button class="secondary" data-action="change-sheet-id">Zmień ID arkusza</button>' +
     (state.errorMsg ? '<div class="rd-error">'+escapeHTML(state.errorMsg)+'</div>' : '') +
     '</div>';
 }
