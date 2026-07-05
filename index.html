@@ -170,8 +170,8 @@ const CATEGORIES = [
     { id:"water", name:"Szklanka wody", type:"simple" },
     { id:"scent_music", name:"Zapach + muzyka", type:"note", notePrompt:"Jaki mam nastrój z rana?" },
     { id:"acupressure", name:"Akupresura + masaż szyi", type:"note", notePrompt:"Ile minut trwało?" },
-    { id:"breathing", name:"Ćwiczenia oddechowe", type:"nested", subItems:["HRV"] },
-    { id:"speech", name:"Ćwiczenia logopedyczne", type:"nested", subItems:[
+    { id:"breathing", name:"Ćwiczenia oddechowe", type:"nested", subItems:["HRV"], editable:true },
+    { id:"speech", name:"Ćwiczenia logopedyczne", type:"nested", editable:true, subItems:[
       "Wyścigówki (na, ne, nu, no, ne, ny)",
       "1 min mówienia dzióbkiem",
       "1 minuta mówienia bezzębnego",
@@ -180,7 +180,7 @@ const CATEGORIES = [
       "Przyklejanie języka do tylnego podniebienia patyczkami",
       "Masaż policzków",
     ]},
-    { id:"supplements", name:"Shot odpornościowy + suplementy/leki", type:"nested_editable", subItems:[] },
+    { id:"supplements", name:"Shot odpornościowy + suplementy/leki", type:"nested", subItems:[], editable:true },
     { id:"day_plan", name:"Plan na dzień", type:"note", notePrompt:"Co jest dziś najważniejsze?" },
   ]},
   { id:"physical", name:"Aktywność fizyczna", items:[
@@ -194,10 +194,10 @@ const CATEGORIES = [
     { id:"pool", name:"Basen", type:"note" },
   ]},
   { id:"meals", name:"Jadłospis", items:[
-    { id:"breakfast", name:"Śniadanie", type:"meal", options:["Owsianka","Kanapki","Jajecznica"] },
-    { id:"lunch", name:"Lunch", type:"meal", options:["Sałatka","Jogurt","Deser"] },
-    { id:"dinner", name:"Obiad", type:"meal", options:["Kasza","Makaron","Tortilla","Pieczone warzywa","Kupne"] },
-    { id:"supper", name:"Kolacja", type:"meal", options:["Kanapki","Tortilla","Jajecznica","Jogurt"] },
+    { id:"breakfast", name:"Śniadanie", type:"meal", editable:true, options:["Owsianka","Kanapki","Jajecznica"] },
+    { id:"lunch", name:"Lunch", type:"meal", editable:true, options:["Sałatka","Jogurt","Deser"] },
+    { id:"dinner", name:"Obiad", type:"meal", editable:true, options:["Kasza","Makaron","Tortilla","Pieczone warzywa","Kupne"] },
+    { id:"supper", name:"Kolacja", type:"meal", editable:true, options:["Kanapki","Tortilla","Jajecznica","Jogurt"] },
   ]},
   { id:"growth", name:"Rozwój osobisty i zawodowy", items:[
     { id:"book_science", name:"Czytanie książki popularnonaukowej", type:"note" },
@@ -355,10 +355,15 @@ function getDayItems(dateStr){
   });
   return { items: items };
 }
-function getSupplements(){
-  const r = rowIndexMap[keyFor("_config","supplements")];
-  if(!r || !r.ExtraJSON) return [];
-  try{ const v = JSON.parse(r.ExtraJSON); return Array.isArray(v) ? v : []; }catch(e){ return []; }
+function getEffectiveList(item){
+  const defaultList = item.type==="meal" ? (item.options||[]) : (item.subItems||[]);
+  if(!item.editable) return defaultList;
+  let r = rowIndexMap[keyFor("_config","list_"+item.id)];
+  if(!r && item.id==="supplements"){ r = rowIndexMap[keyFor("_config","supplements")]; } // backward compat with earlier version
+  if(r && r.ExtraJSON){
+    try{ const v = JSON.parse(r.ExtraJSON); if(Array.isArray(v)) return v; }catch(e){}
+  }
+  return defaultList;
 }
 function listDates(){
   const set = new Set();
@@ -366,7 +371,9 @@ function listDates(){
   return Array.from(set);
 }
 
-async function pushRow(date, itemId, category, itemName, done, note, extraObj){
+const writeChains = {};
+
+function pushRow(date, itemId, category, itemName, done, note, extraObj){
   const cfg = loadConfig();
   const k = keyFor(date, itemId);
   const rowValues = [date, itemId, category||"", itemName||"", done?"TRUE":"FALSE", note||"", JSON.stringify(extraObj), new Date().toISOString()];
@@ -379,13 +386,24 @@ async function pushRow(date, itemId, category, itemName, done, note, extraObj){
   syncStatus = "saving";
   render();
 
+  // Serialize writes per key: if an earlier write to this same item+date is still
+  // in flight, wait for it (and for the row number it learns) before writing again.
+  // This prevents two rapid edits from both thinking "no row yet" and creating duplicates.
+  const prevChain = writeChains[k] || Promise.resolve();
+  const thisChain = prevChain.then(function(){ return doWrite(cfg, k, rowValues); });
+  writeChains[k] = thisChain.catch(function(){});
+  return thisChain;
+}
+
+async function doWrite(cfg, k, rowValues){
+  const rowRef = rowIndexMap[k];
   try{
     const token = await ensureTokenSilent();
     if(!token){ syncStatus="reauth"; pendingSync.delete(k); render(); return; }
 
     let res;
-    if(localRow._rowNum){
-      res = await fetch(sheetsUrl(cfg.spreadsheetId, ACTIVE_SHEET_TAB+"!A"+localRow._rowNum+":H"+localRow._rowNum)+"?valueInputOption=RAW", {
+    if(rowRef._rowNum){
+      res = await fetch(sheetsUrl(cfg.spreadsheetId, ACTIVE_SHEET_TAB+"!A"+rowRef._rowNum+":H"+rowRef._rowNum)+"?valueInputOption=RAW", {
         method:"PUT", headers:{ Authorization:"Bearer "+token, "Content-Type":"application/json" },
         body: JSON.stringify({ values:[rowValues] }),
       });
@@ -403,11 +421,11 @@ async function pushRow(date, itemId, category, itemName, done, note, extraObj){
       return;
     }
     if(!res.ok) throw new Error("http_"+res.status);
-    if(!localRow._rowNum){
+    if(!rowRef._rowNum){
       const data = await res.json();
       if(data.updates && data.updates.updatedRange){
         const m = data.updates.updatedRange.match(/![A-Z]+(\d+):/);
-        if(m) localRow._rowNum = parseInt(m[1],10);
+        if(m) rowRef._rowNum = parseInt(m[1],10);
       }
     }
     pendingSync.delete(k);
@@ -424,32 +442,31 @@ function updateDayItem(dateStr, itemId, updater){
   const prevItems = day.items || {};
   const newData = updater(prevItems[itemId] || {});
   const meta = findItemMeta(itemId);
-  const done = isItemDone(meta, newData, getSupplements());
+  const done = isItemDone(meta, newData);
   const note = meta.type==="note" ? (newData.note||"") : "";
   pushRow(dateStr, itemId, meta.catName, meta.name, done, note, newData);
 }
-function updateSupplements(list){
-  pushRow("_config", "supplements", "", "", false, "", list);
+function saveEffectiveList(item, list){
+  pushRow("_config", "list_"+item.id, "", "", false, "", list);
 }
 
 /* ============================== COMPLETION LOGIC ============================== */
-function isItemDone(item,data,supplements){
+function isItemDone(item,data){
   if(!data) return false;
   switch(item.type){
     case "simple": case "note": return !!data.done;
-    case "nested": { const subs=item.subItems||[]; if(!subs.length) return false; return subs.every(function(s){return data.subDone&&data.subDone[s];}); }
-    case "nested_editable": { const subs=supplements||[]; if(!subs.length) return false; return subs.every(function(s){return data.subDone&&data.subDone[s];}); }
+    case "nested": { const subs=getEffectiveList(item); if(!subs.length) return false; return subs.every(function(s){return data.subDone&&data.subDone[s];}); }
     case "log": return !!(data.logEntries && data.logEntries.length>0);
     case "meal": return !!data.mealValue;
     default: return false;
   }
 }
-function computeDayTotals(dayData,supplements){
+function computeDayTotals(dayData){
   let done=0,total=0; const perCategory={};
   const items=(dayData && dayData.items)||{};
   CATEGORIES.forEach(function(cat){
     let cDone=0;
-    cat.items.forEach(function(item){ total++; if(isItemDone(item,items[item.id],supplements)){done++;cDone++;} });
+    cat.items.forEach(function(item){ total++; if(isItemDone(item,items[item.id])){done++;cDone++;} });
     perCategory[cat.id] = { done:cDone, total:cat.items.length, pct: cat.items.length? cDone/cat.items.length : 0 };
   });
   return { done:done, total:total, pct: total? done/total : 0, perCategory:perCategory };
@@ -483,6 +500,7 @@ const state = {
   dashCustomStart: addDays(todayStr(),-13),
   dashCustomEnd: todayStr(),
   settingsStatus: "",
+  manageListId: null,
 };
 
 function render(){
@@ -552,8 +570,7 @@ function renderBottomNav(){
 /* ============================== TODAY VIEW ============================== */
 function renderToday(){
   const dayData = getDayItems(state.viewDate);
-  const supplements = getSupplements();
-  const totals = computeDayTotals(dayData, supplements);
+  const totals = computeDayTotals(dayData);
   const isToday = state.viewDate === todayStr();
 
   let html = '<div class="rd-daynav">' +
@@ -570,14 +587,14 @@ function renderToday(){
   }).join('') + '</div>';
 
   html += '<div class="rd-daysummary">'+totals.done+'/'+totals.total+' zrealizowanych dziś</div>';
-  CATEGORIES.forEach(function(cat){ html += renderCategory(cat, dayData, supplements); });
+  CATEGORIES.forEach(function(cat){ html += renderCategory(cat, dayData); });
   return html;
 }
 
-function renderCategory(cat, dayData, supplements){
+function renderCategory(cat, dayData){
   const items = (dayData && dayData.items) || {};
   const collapsed = !!state.collapsedCats[cat.id];
-  const doneCount = cat.items.filter(function(it){return isItemDone(it, items[it.id], supplements);}).length;
+  const doneCount = cat.items.filter(function(it){return isItemDone(it, items[it.id]);}).length;
   const colorVar = CATEGORY_HEX[cat.id];
 
   let html = '<section class="rd-cat" id="cat-'+cat.id+'">' +
@@ -590,15 +607,15 @@ function renderCategory(cat, dayData, supplements){
 
   if(!collapsed){
     html += '<div class="rd-cat-body">';
-    cat.items.forEach(function(item){ html += renderItemRow(item, items[item.id]||{}, supplements, colorVar); });
+    cat.items.forEach(function(item){ html += renderItemRow(item, items[item.id]||{}, colorVar); });
     html += '</div>';
   }
   html += '</section>';
   return html;
 }
 
-function renderItemRow(item, data, supplements, color){
-  const done = isItemDone(item, data, supplements);
+function renderItemRow(item, data, color){
+  const done = isItemDone(item, data);
   const expanded = state.expandedItem === item.id;
   const checkBtn = function(interactive, action){
     return '<button class="rd-check'+(done?' done':'')+'" style="--cat-color:'+color+'" '+
@@ -623,8 +640,8 @@ function renderItemRow(item, data, supplements, color){
     return html;
   }
 
-  if(item.type==="nested" || item.type==="nested_editable"){
-    const subs = item.type==="nested" ? (item.subItems||[]) : (supplements||[]);
+  if(item.type==="nested"){
+    const subs = getEffectiveList(item);
     const doneSubs = subs.filter(function(s){return data.subDone && data.subDone[s];}).length;
     let html = '<div><div class="rd-row">' + checkBtn(false,"") +
       '<button class="rd-row-main" data-action="toggle-expand" data-item="'+item.id+'">' +
@@ -633,12 +650,12 @@ function renderItemRow(item, data, supplements, color){
       '<span class="rd-chev">'+(expanded?'&#9662;':'&#9656;')+'</span></span></button></div>';
     if(expanded){
       html += '<div class="rd-detail"><div class="rd-sublist">';
-      if(subs.length===0 && item.type==="nested_editable"){
-        html += '<span class="rd-hint">Brak pozycji — dodaj je w Ustawieniach (ikona zębatki).</span>';
+      if(subs.length===0 && item.editable){
+        html += '<span class="rd-hint">Brak pozycji — dodaj je w Ustawieniach (ikona zębatki, sekcja "Zarządzaj listami").</span>';
       }
       subs.forEach(function(s,idx){
         const checked = !!(data.subDone && data.subDone[s]);
-        html += '<label class="rd-sublabel"><input type="checkbox" '+(checked?'checked':'')+' data-action="toggle-sub" data-item="'+item.id+'" data-nested="'+(item.type==="nested"?"fixed":"editable")+'" data-sub-index="'+idx+'"><span>'+escapeHTML(s)+'</span></label>';
+        html += '<label class="rd-sublabel"><input type="checkbox" '+(checked?'checked':'')+' data-action="toggle-sub" data-item="'+item.id+'" data-sub-index="'+idx+'"><span>'+escapeHTML(s)+'</span></label>';
       });
       html += '</div></div>';
     }
@@ -674,7 +691,7 @@ function renderItemRow(item, data, supplements, color){
     let html = '<div class="rd-row">' + checkBtn(false,"") +
       '<span class="rd-row-name">'+escapeHTML(item.name)+'</span>' +
       '<select class="rd-select" data-action="meal-select" data-item="'+item.id+'"><option value="">— wybierz —</option>';
-    item.options.forEach(function(o){ html += '<option value="'+escapeHTML(o)+'" '+(data.mealValue===o?'selected':'')+'>'+escapeHTML(o)+'</option>'; });
+    getEffectiveList(item).forEach(function(o){ html += '<option value="'+escapeHTML(o)+'" '+(data.mealValue===o?'selected':'')+'>'+escapeHTML(o)+'</option>'; });
     html += '</select></div>';
     return html;
   }
@@ -727,12 +744,11 @@ function renderDashboard(){
   else if(state.dashRange==="month") dateList = lastNDays(30, todayStr());
   else dateList = dateRangeList(state.dashCustomStart, state.dashCustomEnd);
 
-  const supplements = getSupplements();
-  const days = dateList.map(function(d){ return { date:d, totals: computeDayTotals(getDayItems(d), supplements) }; });
+  const days = dateList.map(function(d){ return { date:d, totals: computeDayTotals(getDayItems(d)) }; });
 
   let streak = 0, cursor = todayStr();
   for(let i=0;i<400;i++){
-    const t = computeDayTotals(getDayItems(cursor), supplements);
+    const t = computeDayTotals(getDayItems(cursor));
     if(t.done===0) break;
     streak++; cursor = addDays(cursor,-1);
   }
@@ -791,20 +807,31 @@ function renderDashboard(){
 
 /* ============================== SETTINGS SHEET ============================== */
 function renderSettings(){
-  const supplements = getSupplements();
+  const editableItems = ALL_ITEMS.filter(function(it){ return it.editable; });
   let html = '<div class="rd-overlay" data-action="close-settings-overlay"><div class="rd-sheet" data-action="noop">' +
     '<div class="rd-sheet-top"><h2 class="rd-sheet-title">Ustawienia</h2>' +
     '<button class="rd-sheet-close" data-action="close-settings">&times;</button></div>';
 
-  html += '<h3 class="rd-h3">Suplementy / leki (shot odpornościowy)</h3><div class="rd-supplist">';
-  if(supplements.length===0){
-    html += '<span class="rd-hint">Nie dodałaś jeszcze żadnych pozycji.</span>';
-  } else {
-    supplements.forEach(function(s,idx){
-      html += '<div class="rd-suppitem"><span>'+escapeHTML(s)+'</span><button data-action="remove-supp" data-idx="'+idx+'">Usuń</button></div>';
-    });
+  html += '<h3 class="rd-h3">Zarządzaj listami</h3><div class="rd-chips">';
+  editableItems.forEach(function(it){
+    const active = state.manageListId===it.id;
+    html += '<button class="rd-chip'+(active?" active":"")+'" style="'+(active?"background:var(--accent);border-color:var(--accent)":"")+'" data-action="pick-list" data-item="'+it.id+'">'+escapeHTML(it.name)+'</button>';
+  });
+  html += '</div>';
+
+  if(state.manageListId){
+    const item = findItemMeta(state.manageListId);
+    const list = getEffectiveList(item);
+    html += '<div class="rd-supplist">';
+    if(list.length===0){
+      html += '<span class="rd-hint">Ta lista jest pusta.</span>';
+    } else {
+      list.forEach(function(s,idx){
+        html += '<div class="rd-suppitem"><span>'+escapeHTML(s)+'</span><button data-action="remove-list-item" data-idx="'+idx+'">Usuń</button></div>';
+      });
+    }
+    html += '</div><div class="rd-suppadd"><input id="new-list-item-input" placeholder="Dodaj pozycję…"><button data-action="add-list-item">+</button></div>';
   }
-  html += '</div><div class="rd-suppadd"><input id="new-supp-input" placeholder="np. Witamina D"><button data-action="add-supp">+</button></div>';
 
   html += '<h3 class="rd-h3">Konto i arkusz</h3><div class="rd-settingsbtns">' +
     '<button class="rd-settingsbtn" data-action="refresh-sheet">&#8635; Odśwież dane z arkusza</button>' +
@@ -842,8 +869,8 @@ function handleClick(e){
   if(action==="sign-out"){ accessToken=null; tokenExpiry=0; state.settingsOpen=false; state.screen="signin"; render(); return; }
 
   if(action==="set-tab"){ state.activeTab = el.getAttribute("data-tab"); state.expandedItem=null; render(); return; }
-  if(action==="open-settings"){ state.settingsOpen = true; state.settingsStatus=""; render(); return; }
-  if(action==="close-settings" || action==="close-settings-overlay"){ state.settingsOpen = false; render(); return; }
+  if(action==="open-settings"){ state.settingsOpen = true; state.settingsStatus=""; state.manageListId=null; render(); return; }
+  if(action==="close-settings" || action==="close-settings-overlay"){ state.settingsOpen = false; state.manageListId=null; render(); return; }
   if(action==="nav-date"){ state.viewDate = addDays(state.viewDate, parseInt(el.getAttribute("data-dir"),10)); state.expandedItem=null; render(); return; }
   if(action==="nav-date-today"){ state.viewDate = todayStr(); state.expandedItem=null; render(); return; }
   if(action==="jump-cat"){
@@ -862,10 +889,9 @@ function handleClick(e){
   }
   if(action==="toggle-sub"){
     const id = el.getAttribute("data-item");
-    const nested = el.getAttribute("data-nested");
     const idx = parseInt(el.getAttribute("data-sub-index"),10);
     const meta = findItemMeta(id);
-    const subs = nested==="fixed" ? meta.subItems : getSupplements();
+    const subs = getEffectiveList(meta);
     const label = subs[idx];
     updateDayItem(state.viewDate, id, function(d){
       const cur = !!(d.subDone && d.subDone[label]);
@@ -892,18 +918,21 @@ function handleClick(e){
   if(action==="filter-notes"){ state.notesFilter = el.getAttribute("data-cat"); render(); return; }
   if(action==="set-range"){ state.dashRange = el.getAttribute("data-range"); render(); return; }
 
-  if(action==="add-supp"){
-    const input = document.getElementById("new-supp-input");
+  if(action==="pick-list"){ state.manageListId = el.getAttribute("data-item"); render(); return; }
+  if(action==="add-list-item"){
+    const input = document.getElementById("new-list-item-input");
     const v = input.value.trim();
-    const cur = getSupplements();
+    const item = findItemMeta(state.manageListId);
+    const cur = getEffectiveList(item);
     if(!v || cur.includes(v)) return;
-    updateSupplements([...cur, v]);
+    saveEffectiveList(item, [...cur, v]);
     render(); return;
   }
-  if(action==="remove-supp"){
+  if(action==="remove-list-item"){
     const idx = parseInt(el.getAttribute("data-idx"),10);
-    const cur = getSupplements();
-    updateSupplements(cur.filter(function(_,i){return i!==idx;}));
+    const item = findItemMeta(state.manageListId);
+    const cur = getEffectiveList(item);
+    saveEffectiveList(item, cur.filter(function(_,i){return i!==idx;}));
     render(); return;
   }
   if(action==="refresh-sheet"){
@@ -917,24 +946,24 @@ function handleClick(e){
   if(action==="export-json"){
     const days = {};
     listDates().forEach(function(d){ days[d] = getDayItems(d); });
-    const bundle = { exportedAt: new Date().toISOString(), supplements: getSupplements(), days: days };
+    const lists = {};
+    ALL_ITEMS.filter(function(it){return it.editable;}).forEach(function(it){ lists[it.id] = getEffectiveList(it); });
+    const bundle = { exportedAt: new Date().toISOString(), lists: lists, days: days };
     downloadFile("rytualy-dnia-"+todayStr()+".json", JSON.stringify(bundle,null,2), "application/json");
     state.settingsStatus = "Wyeksportowano "+Object.keys(days).length+" dni.";
     render(); return;
   }
   if(action==="export-csv"){
     const rows = [["Data","Kategoria","Aktywność","Zrobione","Notatka / wartość"]];
-    const supplements = getSupplements();
     listDates().sort().forEach(function(dateStr){
       const dayItems = getDayItems(dateStr).items;
       CATEGORIES.forEach(function(cat){
         cat.items.forEach(function(item){
           const d = dayItems[item.id] || {};
-          const done = isItemDone(item,d,supplements) ? "tak" : "nie";
+          const done = isItemDone(item,d) ? "tak" : "nie";
           let value = "";
           if(item.type==="note") value = d.note||"";
-          else if(item.type==="nested") value = (item.subItems||[]).filter(function(s){return d.subDone&&d.subDone[s];}).join("; ");
-          else if(item.type==="nested_editable") value = (supplements||[]).filter(function(s){return d.subDone&&d.subDone[s];}).join("; ");
+          else if(item.type==="nested") value = getEffectiveList(item).filter(function(s){return d.subDone&&d.subDone[s];}).join("; ");
           else if(item.type==="log") value = (d.logEntries||[]).map(function(en){return (en.exercise||"")+" "+(en.weight||"")+" x"+(en.reps||"");}).join(" | ");
           else if(item.type==="meal") value = d.mealValue||"";
           rows.push([dateStr, cat.name, item.name, done, value]);
