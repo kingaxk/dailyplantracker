@@ -35,7 +35,7 @@ const RECIPES = [
   },
   { id:"bowl_tofu", name:"Bowl z tofu lub tempehem", meals:["obiad","lunch"], portions:1,
     description:"Idealnie zbilansowana miska pełna składników odżywczych. Możesz dowolnie łączyć ulubione kasze, strączki i warzywa. To danie, w którym \"układasz\" składniki obok siebie, a całość spajasz wybranym sosem.",
-    instructions:["Ugotuj bazę (ryż lub kaszę) i pozostaw do lekkiego przestudzenia.", "Tofu lub tempeh pokrój w kostkę. Jeśli chcesz, podsmaż je krótko na suchej patelni lub z odrobiną sosu sojowego.", "Przygotuj warzywa: ogórka pokrój, kukurydzę i fasolę odsącz z zalewy.", "Do dużej miski nałóż bazę. Obok układaj sekcjami: tofu/tempeh, fasolę, kukurydzę, ogórka, rukolę/kiełki oraz wybraną surówkę.", "Polej wybranym sosem tuż przed podaniem. Nie mieszaj wszystkiego od razu — bowl najlepiej smakuje z zachowanym podziałem na kolory i tekstury."],
+    instructions:["Ugotuj bazę (ryż lub kaszę) i pozostaw do lekkiego przestudzenia.", "Tofu lub tempeh pokrój w kostkę. Jeśli chcesz, podsmaż je krótko na suchej patelni lub z odrobiną sosu sojowego.", "Przygotuj warzywa: ogórka pokrój, kukurydzę i fasolę odsącz z zalewy.", "Do dużej miski (bowla) nałóż bazę (kasza/ryż). Obok układaj sekcjami pozostałe składniki: tofu/tempeh, fasolę, kukurydzę, ogórka, rukolę/kiełki oraz wybraną surówkę.", "Całość polej wybranym sosem (np. orzechowym lub vinegrette) tuż przed podaniem. Nie mieszaj wszystkiego od razu – bowl najlepiej wygląda i smakuje, gdy zachowujesz podział na kolory i tekstury."],
     fixed:[
       {name:"Fasola czerwona (z puszki)",amount:100,unit:"g"},
       {name:"Kukurydza",amount:45,unit:"g"},
@@ -63,8 +63,8 @@ const RECIPES = [
   },
   { id:"budyn_jaglany", name:"Budyń jaglany", meals:["sniadanie"], portions:2,
     description:"",
-    instructions:["Pozbądź się goryczki (kluczowy krok!): kaszę jaglaną przepłucz bardzo dokładnie najpierw lodowatą, a potem wrzącą wodą. Możesz ją też krótko uprażyć na suchej, gorącej patelni.", "Wypłukaną kaszę wrzuć do garnka, zalej mlekiem i dodaj wanilię. Gotuj na małym ogniu pod przykryciem 15-20 minut, aż wchłonie płyn i będzie bardzo miękka.", "Do gorącej kaszy dodaj pokrojonego banana lub łyżkę miodu.", "Zblenduj blenderem ręcznym na najwyższych obrotach na gładką, aksamitną masę."],
-    note:"Budyń szybko gęstnieje w miarę stygnięcia — jeśli masa jest zbyt zbita, dolej 2-3 łyżki ciepłego mleka i zblenduj ponownie. Podawaj z borówkami, malinami lub orzechami.",
+    instructions:["Pozbądź się goryczki (Kluczowy krok!): Kaszę jaglaną umieść na gęstym sicie. Przepłucz ją bardzo dokładnie najpierw lodowatą, a następnie wrzącą wodą. Możesz ją też krótko uprażyć na suchej, gorącej patelni, aż zacznie przyjemnie, orzechowo pachnieć.", "Gotowanie: Wypłukaną kaszę wrzuć do garnka, zalej 1,5 szklanki mleka i dodaj wanilię. Gotuj na małym ogniu pod przykryciem przez około 15-20 minut. Kasza musi całkowicie wchłonąć płyn i być bardzo miękka (wręcz lekko rozgotowana).", "Miksowanie bazy (Wybierz swój wariant): Do ugotowanej, jeszcze gorącej kaszy dodaj pokrojonego na kawałki banana / łyżkę miodu.", "Blendowanie na krem: Całość zblenduj blenderem ręcznym na najwyższych obrotach na idealnie gładką, aksamitną masę bez grudek."],
+    note:"Wskazówka dotycząca konsystencji: Budyń jaglany szybko gęstnieje w miarę stygnięcia (szczególnie wersja z miodem). Jeśli po zblendowaniu masa wydaje Ci się zbyt zbita, dolej 2-3 łyżki ciepłego mleka i zblenduj ponownie. Przełóż do miseczek i podawaj na ciepło lub po schłodzeniu w lodówce. Możesz na wierzch dorzucić garść świeżych borówek, malin lub posiekanych orzechów!",
     fixed:[
       {name:"Kasza jaglana",amount:90,unit:"g"},
       {name:"Mleko",amount:375,unit:"ml"},
@@ -79,7 +79,7 @@ const RECIPES = [
   },
   { id:"buleczki_tofu", name:"Bułeczki z tofu z nadzieniem", meals:["kolacja","lunch"], portions:2,
     description:"Sycące, lekko słone bułeczki na cieście z tofu — świetna odmiana od kanapek i zup. Można je upiec z wyprzedzeniem i odgrzać.",
-    instructions:["Odsączone tofu rozgnieć widelcem na gładką masę. Dodaj jajko, mąkę, proszek do pieczenia i sól. Zagnieć elastyczne ciasto.", "Na oliwie zeszklij cebulę z czosnkiem, dodaj pieczarki i smaż, aż odparuje woda i lekko się zarumienią.", "Zdejmij z ognia, wmieszaj posiekane suszone pomidory i parmezan. Wystudź nadzienie.", "Ciasto podziel na 4-6 kawałków, rozpłaszcz, nałóż nadzienie i zlep brzegi.", "Piecz w 190-200°C przez ok. 20-25 minut (albo gotuj na parze 12-15 minut).", "Podawaj ciepłe, samodzielnie lub z lekką sałatką jako lunch."],
+    instructions:["Odsączone tofu rozgnieć widelcem na gładką masę (im gładsza, tym lepsze ciasto). Dodaj jajko, mąkę, proszek do pieczenia i sól. Zagnieć elastyczne, lekko kleiste ciasto — jeśli zbyt mokre, dosyp odrobinę mąki.", "Na oliwie z zalewy pomidorów zeszklij cebulę z czosnkiem. Dodaj pokrojone pieczarki i smaż, aż odparuje woda i lekko się zarumienią.", "Zdejmij patelnię z ognia. Do pieczarek wmieszaj posiekane pomidory suszone i starty parmezan. Wystudź nadzienie.", "Ciasto podziel na 4-6 równych kawałków. Każdy rozpłaszcz w dłoni, na środek nałóż porcję nadzienia i dokładnie zlep brzegi, formując okrągłą bułeczkę.", "Piecz w 190-200°C (termoobieg) przez ok. 20-25 minut, aż lekko się zarumienią. (Alternatywnie: gotuj na parze 12-15 minut dla lżejszej wersji.)", "Podawaj ciepłe — samodzielnie na kolację, lub z lekką sałatką jako lunch (żeby dobić do ~500 kcal)."],
     fixed:[
       {name:"Tofu naturalne",amount:200,unit:"g"},
       {name:"Jajka",amount:1,unit:"sztuka"},
@@ -102,7 +102,7 @@ const RECIPES = [
   },
   { id:"jajecznica", name:"Jajecznica", meals:["sniadanie","lunch","kolacja"], portions:1,
     description:"Genialne, białkowe śniadanie. Zawinięcie jajecznicy w tortillę sprawia, że danie jest super wygodne do zjedzenia w biegu.",
-    instructions:["Na maśle/oleju usmaż luźną jajecznicę. Pod koniec smażenia posyp parmezanem.", "Na tej samej, rozgrzanej patelni podsmaż pokrojonego pomidora przez ok. minutę.", "Na tortilli ułóż rukolę, jajecznicę i pomidora (i ew. kukurydzę). Zwiń w rulon lub kopertę."],
+    instructions:["Na maśle/oleju usmaż luźną jajecznicę. Pod koniec smażenia posyp ją parmezanem, aby lekko się stopił. Zdejmij z patelni.", "Na tę samą, mocno rozgrzaną patelnię wrzuć pokrojonego pomidora. Smaż dosłownie 1 minutę na max mocy, aż złapie kolor, ale nie rozpadnie się na sos.", "Na tortilli ułóż rukolę, jajecznicę, ciepłego pomidora (i ew. kukurydzę). Zwiń ciasno w rulon lub kopertę. Możesz krótko podpiec wrapa na suchej patelni lub grillu."],
     fixed:[
       {name:"Tortilla / chleb / bułka",amount:60,unit:"g"},
       {name:"Masło lub olej",amount:5,unit:"g"},
@@ -119,7 +119,7 @@ const RECIPES = [
   },
   { id:"mus_orzechowy", name:"Mus orzechowy", meals:["sniadanie"], portions:1,
     description:"Aksamitny, wysokobiałkowy krem, który smakuje jak luksusowy deser, a ma świetne makro. Idealny na zimno w upalne dni.",
-    instructions:["Wszystkie składniki (baza + pasta orzechowa + słodzik + ew. kakao) zblenduj na najwyższych obrotach przez 2-3 minuty, aż masa się napowietrzy i będzie gładka.", "Możesz dodać czekoladę, owoce oraz posiekane lub podprażone orzechy.", "Opcjonalnie schłodź w lodówce przed podaniem."],
+    instructions:["Wszystkie składniki (baza + pasta orzechowa + słodzik + ew. kakao) wrzuć do wysokiego naczynia i blenduj na najwyższych obrotach przez 2-3 minuty, aż masa napowietrzy się i będzie idealnie gładka.", "Możesz dodać czekoladę i owoce.", "Możesz także dodać posiekane (może również namoczone lub podprażone) orzechy.", "Opcjonalnie schłodź w lodówce i/lub przed podaniem udekoruj owocami/orzechami."],
     fixed:[
       {name:"Pasta orzechowa",amount:25,unit:"g"},
       {name:"Owoce na wierzch (borówki/maliny)",amount:30,unit:"g"},
@@ -142,8 +142,8 @@ const RECIPES = [
     ],
   },
   { id:"omlet_placuszki", name:"Omlet lub placuszki", meals:["sniadanie","lunch"], portions:1,
-    description:"Puszysta opcja na słodkie rozpoczęcie dnia. Z podanego ciasta możesz usmażyć albo 1 duży omlet, albo kilka mniejszych placuszków.",
-    instructions:["Oddziel białka od żółtek. Białka ubij ze szczyptą soli na sztywną pianę.", "Żółtka wymieszaj z twarogiem/skyrem, mąką, słodzikiem i proszkiem do pieczenia na gładką masę.", "Delikatnie wmieszaj pianę do masy żółtkowej.", "Rozgrzej patelnię z tłuszczem, wylej ciasto, ułóż owoce na wierzchu. Smaż na małym ogniu pod przykryciem 3-4 minuty, obróć i smaż jeszcze minutę bez przykrycia."],
+    description:"Puszysta opcja na słodkie rozpoczęcie dnia. Z podanego ciasta możesz usmażyć albo 1 duży omlet (pod przykryciem), albo kilka mniejszych placuszków.",
+    instructions:["Oddziel białka od żółtek. Białka ubij ze szczyptą soli na sztywną pianę.", "Żółtka wymieszaj w miseczce z twarogiem/skyrem, mąką, słodzikiem i proszkiem do pieczenia na gładką masę.", "Delikatnie, za pomocą szpatułki, wmieszaj ubitą pianę z białek do masy żółtkowej.", "Rozgrzej patelnię z odrobiną tłuszczu. Wylej ciasto (jako jeden omlet lub porcje na placuszki). Na wierzchu ułóż owoce (jeśli są mrożone, wrzuć je bezpośrednio na ciasto). Smaż na małym ogniu pod przykryciem przez ok. 3-4 minuty, obróć na drugą stronę i smaż jeszcze minutę bez przykrycia."],
     fixed:[
       {name:"Jajka",amount:2,unit:"sztuka"},
       {name:"Twaróg chudy / skyr",amount:50,unit:"g"},
@@ -160,8 +160,8 @@ const RECIPES = [
     ],
   },
   { id:"owsianka_chia", name:"Owsianka z chia", meals:["sniadanie"], portions:1,
-    description:"Idealne śniadanie \"overnight\" — przygotowujesz wieczorem, rano wyciągasz gotowe z lodówki. Nasiona chia i płatki pęcznieją przez noc, dając super strukturę.",
-    instructions:["W słoiku wymieszaj płatki owsiane i nasiona chia.", "Dodaj wybraną bazę płynną oraz słodzik. Dokładnie wymieszaj, aby chia nie zbiły się w grudki.", "Na wierzch wrzuć owoce i opcjonalne orzechy.", "Zamknij słoik, wstaw do lodówki na min. 4 godziny (najlepiej na całą noc). Rano wymieszaj i jedz na zimno."],
+    description:"Idealne śniadanie \"overnight\" (nocne) – przygotowujesz wieczorem, rano wyciągasz gotowe z lodówki. Nasiona chia i płatki pęcznieją przez noc, dając super strukturę.",
+    instructions:["W słoiku lub miseczce wymieszaj suche płatki owsiane i nasiona chia.", "Dodaj wybraną bazę (skyr z wodą lub napój roślinny) oraz słodzik. Dokładnie wymieszaj, aby chia nie zbiły się w grudki.", "Na wierzch wrzuć owoce (mrożone przez noc idealnie puszczą pyszny sok i rozmrożą się w lodówce) oraz opcjonalne orzechy.", "Zamknij słoik i wstaw do lodówki na minimum 4 godziny (a najlepiej na całą noc). Rano wymieszaj i jedz na zimno."],
     fixed:[
       {name:"Płatki owsiane",amount:40,unit:"g"},
       {name:"Nasiona chia",amount:5,unit:"g"},
@@ -184,7 +184,7 @@ const RECIPES = [
   },
   { id:"pad_thai", name:"Pad thai z batatem i kapustą", meals:["obiad"], portions:4,
     description:"",
-    instructions:["Przygotuj sos: wymieszaj składniki na sos, wyciśnij sok z limonki, zetrzyj imbir, przeciśnij czosnek przez praskę.", "Na oleju podsmaż czosnek i chili.", "Zetrzyj bataty na tarce i podsmażaj ok. 3 minuty.", "Dodaj poszatkowaną kapustę i wodę. Gotuj 5 minut, wlej sos i wymieszaj.", "Na osobnej patelni podsmaż nerkowce. Danie posyp szczypiorkiem i orzechami."],
+    instructions:["Przygotuj sos: Wymieszaj składniki na sos. Wyciśnij sok z limonki, imbir zetrzyj na tarce, a czosnek przeciśnij przez praskę.", "Baza: Na oleju podsmaż czosnek i chili przeznaczone do Pad Thai.", "Bataty: Zetrzyj bataty na tarce i dodaj na patelnię, podsmażając przez około 3 minuty.", "Gotowanie: Dodaj poszatkowaną kapustę oraz 1/4 szklanki wody. Gotuj całość przez 5 minut. Następnie wlej przygotowany sos i wymieszaj.", "Wykończenie: Na oddzielnej patelni podsmaż orzechy nerkowca. Gotowe danie posyp posiekanym szczypiorkiem i orzechami."],
     fixed:[
       {name:"Sos tamari lub sojowy",amount:30,unit:"ml"},
       {name:"Masło orzechowe",amount:50,unit:"g"},
@@ -205,8 +205,7 @@ const RECIPES = [
   },
   { id:"pieczone_warzywa", name:"Pieczone warzywa (korzeniowe)", meals:["obiad","lunch"], portions:1,
     description:"Słodkawe, aromatyczne i niesamowicie sycące danie jednogarnkowe (z blachy).",
-    instructions:["Wymieszaj warzywa z olejem i marynatą (sos sojowy, wędzona papryka, czosnek granulowany, sól, pieprz, opcjonalnie koncentrat pomidorowy). Piecz w 200°C (termoobieg) ok. 35-45 minut, aż ziemniaki i buraki będą miękkie."],
-    note:"Warto wyprażyć przyprawy w ziarnach na suchej patelni (nie mielone). Cebulę pokrój w grube pióra i piecz surową razem z warzywami.",
+    instructions:["Czy warto wyprażyć przyprawy na patelni? TAK! Jeśli używasz przypraw w ziarnach (kumin, kolendra, gorczyca), uprażenie ich na suchej patelni przez 1 minutę uwalnia niesamowity, głęboki aromat. Jeśli używasz mielonych (np. wędzona papryka) – nie praż, bo gorzknieją.", "Czy warto cebulę wcześniej usmażyć? NIE. Cebula pokrojona w grube pióra upiecze się idealnie na blaszce razem z warzywami. Zrobi się słodka i lekko przypieczona.", "Sos do marynowania (must-have!): W miseczce wymieszaj olej, sos sojowy (da genialny posmak umami), mnóstwo wędzonej papryki, czosnek granulowany, sól, pieprz i opcjonalnie 1 łyżeczkę koncentratu pomidorowego (zagęści marynatę i podkręci kolor). Obtocz w tym warzywa przed wyłożeniem na blachę.", "Pieczenie: 200°C (termoobieg) przez około 35-45 minut, aż ziemniaki i buraki będą miękkie."],
     fixed:[
       {name:"Miks warzyw korzeniowych (ziemniaki, buraki, marchew, pietruszka)",amount:550,unit:"g"},
       {name:"Cebula",amount:1,unit:"sztuka"},
@@ -223,7 +222,7 @@ const RECIPES = [
   },
   { id:"risotto", name:"Risotto lub sos makaronowy", meals:["obiad","lunch"], portions:1,
     description:"Kremowe, mocno serowe danie bazowe. W zależności od tego, czy użyjesz ryżu do risotto, czy makaronu, dostosuj technikę przygotowania.",
-    instructions:["Risotto: na maśle/oliwie zeszklij cebulę z czosnkiem (i ew. grzybami). Wsyp ryż, smaż 2 minuty aż zrobi się szklisty. Dolewaj gorący bulion porcjami, mieszając, aż wchłonie płyn. W połowie dodaj brokuły lub na koniec purée z dyni. Na koniec wmieszaj parmezan i mozzarellę.", "Sos do makaronu: podsmaż warzywa z cebulą i czosnkiem, zalej bulionem i podduś. Ugotowany makaron wrzuć do sosu, dodaj sery i wymieszaj do roztopienia."],
+    instructions:["Dla opcji Risotto: Na maśle/oliwie zeszklij cebulę z czosnkiem (i ew. grzybami). Wsyp suchy ryż i smaż 2 minuty, aż zrobi się szklisty. Dolewaj gorący bulion porcjami (po jednej wazówce), mieszając, aż ryż wchłonie płyn. W połowie dodaj brokuły lub na koniec purée z dyni. Gdy ryż będzie al dente, zdejmij z ognia, wmieszaj parmezan i mozzarellę.", "Dla opcji Sos do makaronu: Podsmaż warzywa na maśle z cebulą i czosnkiem, zalej odrobiną bulionu i podduś. Ugotowany osobno makaron wrzuć bezpośrednio do sosu, dodaj sery i wymieszaj na małym ogniu do roztopienia (możesz podlać 2 łyżkami wody z gotowania makaronu)."],
     fixed:[
       {name:"Cebula",amount:0.5,unit:"sztuka"},
       {name:"Czosnek",amount:1,unit:"ząbek"},
@@ -246,7 +245,7 @@ const RECIPES = [
   },
   { id:"kluseczki_szpinak", name:"Szybkie kluseczki leniwe (ze szpinakiem)", meals:["obiad","lunch","kolacja"], portions:1,
     description:"Ekspresowe leniwe wzbogacone o zielony akcent, dzięki czemu przemycasz do porcji dodatkowe witaminy.",
-    instructions:["Zblenduj jajko ze świeżym szpinakiem na gładki zielony płyn.", "W misce połącz twaróg, zielone jajko, mąkę i szczyptę soli. Zagnieć jednolite ciasto.", "Uformuj wałek i pokrój ukośne kluseczki.", "Wrzucaj na wrzącą, osoloną wodę. Gotuj ok. 1-2 minuty od wypłynięcia. Podawaj polane masłem."],
+    instructions:["Zblenduj jajko ze świeżym szpinakiem na gładki zielony płyn.", "W misce połącz rozgnieciony twaróg, zielone jajko, mąkę i szczyptę soli. Zagnieć szybko jednolite, lekko kleiste ciasto.", "Wyłóż ciasto na podsypany mąką blat, uformuj wałek i krój ukośne kluseczki.", "Wrzucaj na wrzącą, osoloną wodę. Gotuj przez ok. 1-2 minuty od momentu, gdy wypłyną na powierzchnię. Podawaj polane odrobiną masła."],
     fixed:[
       {name:"Twaróg",amount:150,unit:"g"},
       {name:"Mąka pszenna lub orkiszowa",amount:45,unit:"g"},
@@ -259,7 +258,7 @@ const RECIPES = [
   },
   { id:"tofu_panierka", name:"Tofu w panierce", meals:["obiad","lunch"], portions:1,
     description:"Chrupiące tofu w panierce w klasycznym, \"kotletowym\" stylu — sycące danie obiadowe, które można też zabrać jako lunch w pojemniku.",
-    instructions:["Plastry tofu osusz i dopraw solą i pieprzem.", "Obtocz w mące, roztrzepanym jajku, a na końcu w bułce tartej.", "Piecz w 200°C przez ok. 20 minut, przewracając w połowie (albo usmaż na patelni, ok. 3 minuty z każdej strony).", "Ugotuj ryż na sypko i zrób surówkę. Podawaj razem."],
+    instructions:["Plastry tofu osusz papierowym ręcznikiem i lekko dopraw solą i pieprzem.", "Obtocz każdy plaster kolejno w mące, roztrzepanym jajku, a na końcu w bułce tartej — dociśnij panierkę dłonią, żeby dobrze się trzymała.", "Piecz w 200°C (termoobieg) przez ok. 20 minut, przewracając w połowie, skropione odrobiną oliwy (albo usmaż na patelni na łyżce oleju, po ok. 3 minuty z każdej strony, na złoty kolor).", "W międzyczasie ugotuj ryż na sypko i zrób surówkę.", "Podawaj tofu w panierce z ciepłym ryżem i surówką obok."],
     fixed:[
       {name:"Tofu naturalne",amount:150,unit:"g"},
       {name:"Mąka pszenna",amount:10,unit:"g"},
@@ -272,7 +271,7 @@ const RECIPES = [
   },
   { id:"tortilla_gyros", name:"Tortilla gyros", meals:["sniadanie","obiad","lunch"], portions:1,
     description:"Szybki, sycący wrap w stylu street-food. Idealny na obiad, który można łatwo zmodyfikować w zależności od tego, jakie białko masz pod ręką.",
-    instructions:["Na tortilli ułóż świeże warzywa, wybrane białko i surówkę. Dodaj opcjonalne dodatki (feta, oliwki, kukurydza). Zwiń w wrapa."],
+    instructions:[],
     fixed:[
       {name:"Tortilla",amount:60,unit:"g"},
       {name:"Świeże warzywa (pomidor, ogórek, papryka, sałata)",amount:150,unit:"g"},
@@ -296,7 +295,7 @@ const RECIPES = [
   },
   { id:"zupa_azjatycka", name:"Zupa azjatycka z mrożonych warzyw", meals:["lunch","obiad","kolacja"], portions:2,
     description:"Rozgrzewająca, aromatyczna zupa w stylu tajskim. Robi się ją błyskawicznie, korzystając z gotowych mrożonek.",
-    instructions:["W garnku na suchym dnie podgrzej przez 30 sekund pastę curry z imbirem.", "Wlej wodę/bulion, dodaj liście kaffiru i zagotuj.", "Wrzuć zamrożone warzywa, gotuj na małym ogniu 7-10 minut, aż będą al dente.", "Wlej mleczko kokosowe, sos sojowy i sok z limonki. Podgrzej (nie gotuj mocno), dopraw do smaku. Posyp dymką."],
+    instructions:["W garnku na suchej dnie podgrzej przez 30 sekund pastę curry z imbirem.", "Wlej wodę/bulion, dodaj liście kaffiru i zagotuj.", "Wrzuć zamrożone warzywa i gotuj na małym ogniu przez ok. 7-10 minut, aż będą al dente.", "Wlej mleczko kokosowe, sos sojowy i sok z limonki. Wymieszaj, podgrzej (nie gotuj już mocno, by mleczko się nie zwarzyło) i dopraw do smaku. W misce możesz posypać dymką."],
     fixed:[
       {name:"Mieszanka warzyw azjatyckich mrożonych",amount:450,unit:"g"},
       {name:"Mleczko kokosowe",amount:200,unit:"ml"},
@@ -314,8 +313,8 @@ const RECIPES = [
 /* ============================== ADDONS (DODATKI) DATABASE ============================== */
 const ADDONS = [
   { id:"ogorki_chili", name:"Ogórki w zalewie chili", portions:4,
-    description:"Chrupiące, ostro-słodkie ogórki. Robione na świeżo, bez pasteryzacji — mogą stać w lodówce do 2 tygodni.",
-    instructions:["Pokrojone ogórki zasyp solą, odstaw na 1-2 godziny aż puszczą wodę, potem odlej wodę (nie płucz).", "Dodaj plasterki czosnku.", "Podgrzej składniki zalewy, aż cukier się rozpuści.", "Zalej ogórki ciepłą zalewą, przełóż do słoika. Najlepsze na drugi dzień."],
+    description:"Chrupiące, ostro-słodkie ogórki. Robione na świeżo, bez pasteryzacji – idealne do słoika na bieżące jedzenie (mogą stać w lodówce do 2 tygodni).",
+    instructions:["Pokrojone ogórki zasyp solą, wymieszaj i odstaw na 1-2 godziny, aż puszczą wodę. Następnie dokładnie odlej całą powstałą wodę (nie płucz ogórków).", "Dodaj plasterki czosnku.", "W małym garnuszku podgrzej składniki zalewy (olej, ocet, cukier, chili), tylko do momentu, aż cukier całkowicie się rozpuści.", "Zalej ogórki ciepłą zalewą, wymieszaj i przełóż do słoika. Najlepsze są na drugi dzień, gdy smaki się przegryzą."],
     fixed:[
       {name:"Ogórki gruntowe",amount:500,unit:"g"},
       {name:"Sól niejodowana",amount:1,unit:"łyżka"},
@@ -328,7 +327,7 @@ const ADDONS = [
   },
   { id:"marchewka_sezam", name:"Marchewka z sezamem", portions:2,
     description:"Chrupiąca marchewka w azjatyckim stylu. Świetnie pasuje do dań z ryżem, makaronem azjatyckim lub jako samodzielna przekąska.",
-    instructions:["Wymieszaj olej sezamowy, sos sojowy, sok z cytrusa i miód.", "Połącz sos z marchewką.", "Posyp uprażonym sezamem. Odstaw na 15 minut przed podaniem."],
+    instructions:["Wymieszaj w miseczce olej sezamowy, sos sojowy, sok z cytrusa i miód.", "Połącz sos z przygotowaną marchewką.", "Posyp całość uprażonym sezamem (i opcjonalnie zieleniną). Odstaw na 15 minut przed podaniem."],
     fixed:[
       {name:"Marchew",amount:200,unit:"g"},
       {name:"Sezam",amount:5,unit:"g"},
@@ -340,7 +339,7 @@ const ADDONS = [
   },
   { id:"surowka_kapusta", name:"Surówka z kapusty (biała/czerwona)", portions:4,
     description:"Dwie klasyczne wersje barowe do wyboru: lekka octowa oraz bogatsza majonezowa.",
-    instructions:["Wersja biała: poszatkowaną kapustę posól, ugnieć, odstaw 10 minut, dodaj olej, ocet i cukier.", "Wersja czerwona: kapustę wymieszaj z kukurydzą, połącz z sosem z majonezu, jogurtu, cytryny, soli i pieprzu."],
+    instructions:["Dla wersji A: Poszatkowaną białą kapustę posól, wymieszaj i ugnieć dłonią. Odstaw na 10 minut. Dodaj olej, ocet i cukier, wymieszaj.", "Dla wersji B: Przygotowaną czerwoną kapustę wymieszaj z kukurydzą. W osobnej miseczce połącz majonez, jogurt, sok z cytryny, sól oraz pieprz. Połącz sos z warzywami."],
     fixed:[], variantGroups:[
       { id:"wersja", label:"Wersja", options:[
         { id:"biala", label:"Biała, octowa", ingredients:[
@@ -361,7 +360,7 @@ const ADDONS = [
   },
   { id:"pasta_tofu_sliwki", name:"Pasta z wędzonego tofu i suszonych śliwek", portions:2,
     description:"Wytrawna, dymna pasta kanapkowa o głębokim smaku przypominającym myśliwskie pieczenie.",
-    instructions:["Tofu pokrusz do blendera.", "Dodaj śliwki, sos sojowy, olej, majeranek i pieprz.", "Blenduj na gładką masę, ewentualnie dodaj wody dla lżejszej konsystencji."],
+    instructions:["Tofu pokrusz do pojemnika blendera.", "Dodaj odsączone suszone śliwki, sos sojowy, olej, majeranek oraz sporą ilość pieprzu.", "Blenduj na gładką masę. Jeśli pasta jest zbyt gęsta, dodaj 1-2 łyżki wody (np. z moczenia śliwek) i zblenduj ponownie."],
     fixed:[
       {name:"Tofu wędzone",amount:180,unit:"g"},
       {name:"Suszone śliwki",amount:35,unit:"g"},
@@ -372,7 +371,7 @@ const ADDONS = [
   },
   { id:"almette_chorizo", name:"Almette, chorizo i rukola", portions:1,
     description:"Kompozycja na gotową kanapkę na bazie chleba lub bułki.",
-    instructions:["Pieczywo posmaruj Almette. Ułóż rukolę, chorizo i pomidora. Skrop sosem balsamicznym."],
+    instructions:["Pieczywo posmaruj obficie serkiem Almette. Ułóż na nim rukolę, plasterki chorizo oraz pomidora. Całość skrop delikatnie sosem balsamicznym."],
     fixed:[
       {name:"Serek Almette",amount:25,unit:"g"},
       {name:"Kiełbasa chorizo",amount:15,unit:"g"},
@@ -382,8 +381,8 @@ const ADDONS = [
     ], variantGroups:[],
   },
   { id:"ciecierzyca_prazona", name:"Prażona (pieczona) ciecierzyca", portions:1,
-    description:"Chrupiący, prosty dodatek — świetny zamiast pieczywa do zup i sałatek.",
-    instructions:["Osusz ciecierzycę bardzo dokładnie.", "Wymieszaj z oliwą i przyprawami.", "Piecz w 200°C przez 20-25 minut, potrząsając w połowie. Wystudź przed podaniem — chrupkość rośnie po ostygnięciu."],
+    description:"Chrupiący, prosty dodatek — świetny zamiast pieczywa do zup i sałatek, dodaje chrupkości i tekstury.",
+    instructions:["Odsączoną ciecierzycę osusz bardzo dokładnie papierowym ręcznikiem — im suchsza, tym bardziej chrupiąca po upieczeniu.", "Wymieszaj z oliwą i wybranymi przyprawami.", "Rozłóż na blaszce w jednej warstwie. Piecz w 200°C (termoobieg) przez 20–25 minut, potrząsając blachą w połowie pieczenia, aż ziarna zrobią się złociste i chrupiące.", "Wystudź przed podaniem — chrupkość mocno wzrasta po ostygnięciu. Przechowuj w otwartym (nie szczelnie zamkniętym od razu) pojemniku do 3–4 dni, żeby nie zmiękła od pary."],
     fixed:[
       {name:"Ciecierzyca z puszki",amount:40,unit:"g"},
       {name:"Oliwa z oliwek",amount:2,unit:"g"},
@@ -391,15 +390,15 @@ const ADDONS = [
   },
   { id:"sos_balsamiczny", name:"Sos balsamiczny (krem)", portions:7,
     description:"Gęsty, słodko-kwaśny, idealny do polania kanapki lub caprese.",
-    instructions:["Ocet wlej do rondelka, dodaj melasę/miód. Gotuj na małym ogniu 10-15 minut bez przykrycia, aż zredukuje się o połowę."],
+    instructions:["Ocet wlej do rondelka, dodaj melasę/miód. Gotuj na bardzo małym ogniu przez ok. 10-15 minut bez przykrycia, aż płyn zmniejszy objętość o połowę i zrobi się syropowaty - uwaga: gęstnieje mocniej po wystygnięciu!"],
     fixed:[
       {name:"Ocet balsamiczny",amount:100,unit:"ml"},
       {name:"Melasa z granatu lub miód",amount:25,unit:"g"},
     ], variantGroups:[],
   },
   { id:"sos_orzechowy", name:"Sos orzechowy (a la Pad Thai)", portions:5,
-    description:"Kremowy, lekko pikantny, idealny do świeżych warzyw, wrapów lub makaronu.",
-    instructions:["Wymieszaj masło orzechowe z sosem sojowym, limonką i srirachą. Dolewaj ciepłą wodę, mieszając, aż uzyskasz gładki krem."],
+    description:"Kremowy, lekko pikantny, idealny do świeżych warzyw w słupkach, wrapów lub makaronu.",
+    instructions:["Wymieszaj masło orzechowe z sosem sojowym, limonką i srirachą. Energicznie mieszając, dolewaj po łyżce ciepłej wody, aż sos zmieni konsystencję z gęstej kluchy w gładki, lejący krem."],
     fixed:[
       {name:"Masło orzechowe",amount:25,unit:"g"},
       {name:"Sos sojowy",amount:15,unit:"ml"},
@@ -409,7 +408,7 @@ const ADDONS = [
   },
   { id:"sos_sezamowy", name:"Sos sezamowy (tahini-dip)", portions:5,
     description:"Głęboki, lekko goryczkowy, bliskowschodni klasyk.",
-    instructions:["Tahini połącz z cytryną i miodem. Dodaj zimną wodę i mieszaj do gładkiego kremu."],
+    instructions:["Tahini połącz z cytryną i miodem. Dodaj zimną wodę i mieszaj – sos najpierw mocno zgęstnieje, a potem zmieni się w jasny, gładki krem."],
     fixed:[
       {name:"Pasta tahini",amount:25,unit:"g"},
       {name:"Sok z cytryny",amount:1,unit:"łyżka"},
@@ -417,8 +416,8 @@ const ADDONS = [
     ], variantGroups:[],
   },
   { id:"sos_musztardowo_miodowy", name:"Sos musztardowo-miodowy", portions:3,
-    description:"Uniwersalny sos, który pasuje do każdej zielonej sałaty.",
-    instructions:["Wszystkie składniki umieść w słoiczku, zakręć i energicznie wstrząśnij do gładkiej emulsji."],
+    description:"Uniwersalny sos, który pasuje absolutnie do każdej zielonej sałaty.",
+    instructions:["Wszystkie składniki umieść w małym słoiczku, zakręć go i energicznie wstrząsaj przez kilkanaście sekund, aż powstanie gładka emulsja."],
     fixed:[
       {name:"Musztarda",amount:25,unit:"g"},
       {name:"Miód",amount:12,unit:"g"},
@@ -428,7 +427,7 @@ const ADDONS = [
   },
   { id:"sos_vinegrette", name:"Sos Vinegrette (klasyczny)", portions:3,
     description:"Tradycyjny francuski dressing.",
-    instructions:["Wymieszaj metodą wstrząsania w słoiku do jednolitej struktury."],
+    instructions:["Podobnie jak musztardowo-miodowy – najlepiej wymieszać metodą \"wstrząsania w słoiku\" do uzyskania jednolitej struktury."],
     fixed:[
       {name:"Oliwa z oliwek",amount:24,unit:"g"},
       {name:"Ocet winny lub sok z cytryny",amount:1,unit:"łyżka"},
@@ -436,8 +435,8 @@ const ADDONS = [
     ], variantGroups:[],
   },
   { id:"hummus", name:"Hummus domowy", portions:15,
-    description:"Aksamitna pasta strączkowa — idealna baza białkowo-tłuszczowa.",
-    instructions:["Zblenduj ciecierzycę z tahini, cytryną, czosnkiem, kuminem i solą, dolewając stopniowo lodowatą wodę, aż hummus będzie puszysty i jasny."],
+    description:"Aksamitna pasta strączkowa – idealna baza białkowo-tłuszczowa.",
+    instructions:["Zblenduj ciecierzycę z tahini, cytryną, czosnkiem, kuminem i solą. W trakcie blendowania dolewaj stopniowo lodowatą wodę (może być z kostką lodu) - to sprawi, że hummus stanie się niesamowicie puszysty i jasny."],
     fixed:[
       {name:"Ciecierzyca z puszki",amount:240,unit:"g"},
       {name:"Pasta tahini",amount:40,unit:"g"},
@@ -448,7 +447,7 @@ const ADDONS = [
   },
   { id:"pasta_jajeczna", name:"Pasta jajeczna do kanapek", portions:2,
     description:"Klasyczna, kremowa pasta na kanapki. Dodatek jogurtu odchudza przepis, nie ujmując mu aksamitności.",
-    instructions:["Ugotowane na twardo jajka obierz i drobno posiekaj lub rozgnieć.", "Dodaj majonez, jogurt, musztardę, szczypiorek i przyprawy. Wymieszaj na kremową pastę."],
+    instructions:["Ugotowane na twardo i ostudzone jajka obierz, a następnie bardzo drobno posiekaj lub rozgnieć widelcem (można też zetrzeć na tarce o drobnych oczkach). Dodaj majonez, jogurt, musztardę, posiekany szczypiorek oraz przyprawy. Wszystko dokładnie wymieszaj, rozgniatając masę łyżką, aż połączy się w kremową pastę."],
     fixed:[
       {name:"Jajka",amount:3,unit:"sztuka"},
       {name:"Majonez lekki",amount:15,unit:"g"},

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Generator przepisów — Rytuały dnia</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Karla:wght@400;500;600;700&display=swap');
+  :root{
+    --bg:#F3F5EF; --bg-card:#FFFFFF; --ink:#2B3328; --ink-soft:#5B6459;
+    --line:#E1E5DA; --accent:#8B5A6B; --gold:#C9A66B;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);}
+  body{font-family:'Karla',-apple-system,sans-serif;color:var(--ink);}
+  button,input,select,textarea{font-family:inherit;color:inherit;}
+  .wrap{max-width:640px;margin:0 auto;padding:24px 18px 60px;}
+  h1{font-family:'Fraunces',Georgia,serif;font-size:24px;margin:0 0 6px;}
+  .sub{font-size:14px;color:var(--ink-soft);margin:0 0 24px;line-height:1.5;}
+  .card{background:var(--bg-card);border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(43,51,40,0.06);}
+  .card h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:0 0 14px;}
+  label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin:0 0 5px;}
+  input[type=text],input[type=number],textarea,select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-size:14px;margin-bottom:12px;background:#fff;}
+  textarea{resize:vertical;}
+  .row{display:flex;gap:8px;}
+  .row > *{flex:1;}
+  .chiprow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .chip{padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px;cursor:pointer;}
+  .chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .toggle2{display:flex;gap:8px;margin-bottom:20px;}
+  .toggle2 button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:#fff;font-weight:700;cursor:pointer;}
+  .toggle2 button.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .ing-row{display:flex;gap:6px;margin-bottom:8px;align-items:center;}
+  .ing-row input{margin-bottom:0;}
+  .ing-name{flex:2;}
+  .ing-amt{flex:1;}
+  .ing-unit{flex:1;}
+  .rm-btn{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:18px;padding:4px 8px;flex-shrink:0;}
+  .add-btn{background:none;border:1px dashed var(--line);border-radius:8px;color:var(--ink-soft);cursor:pointer;font-size:13px;padding:8px 12px;width:100%;margin-bottom:8px;}
+  .group-box{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;background:var(--bg);}
+  .group-box-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .group-box-top strong{font-size:13px;}
+  .option-box{border-left:3px solid var(--gold);padding:8px 0 8px 12px;margin-bottom:10px;}
+  .step-row{display:flex;gap:6px;margin-bottom:8px;align-items:flex-start;}
+  .step-row textarea{margin-bottom:0;}
+  .hint{font-size:12px;color:var(--ink-soft);margin:-6px 0 12px;line-height:1.5;}
+  .generate-btn{width:100%;padding:14px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;}
+  .out-wrap{position:relative;}
+  #output{width:100%;min-height:260px;font-family:'Menlo','Consolas',monospace;font-size:12px;background:#1e2320;color:#dfe6df;border-radius:10px;padding:14px;white-space:pre;overflow-x:auto;border:none;}
+  .copy-btn{position:absolute;top:10px;right:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer;}
+  .copied{background:#5B7355 !important;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Generator przepisów</h1>
+  <p class="sub">Wypełnij formularz, kliknij "Generuj kod" na dole, skopiuj wynik i wklej do <code>recipes-data.js</code> — jako nowy element tablicy <code>RECIPES</code> (albo <code>ADDONS</code>, jeśli to dodatek). Ten plik działa lokalnie, nic nie zapisuje ani nie wysyła.</p>
+
+  <div class="toggle2">
+    <button id="btn-recipe" class="active" onclick="setKind('recipe')">Nowy przepis (danie)</button>
+    <button id="btn-addon" onclick="setKind('addon')">Nowy dodatek</button>
+  </div>
+
+  <div class="card">
+    <h2>Podstawy</h2>
+    <label>Nazwa</label>
+    <input type="text" id="f-name" placeholder="np. Sałatka z komosą ryżową" oninput="onNameChange()">
+    <label>ID (generowane automatycznie, możesz poprawić)</label>
+    <input type="text" id="f-id">
+    <div id="meals-block">
+      <label>Do jakich posiłków pasuje?</label>
+      <div class="chiprow" id="meals-chips">
+        <button type="button" class="chip" data-meal="sniadanie" onclick="toggleMeal(this)">Śniadanie</button>
+        <button type="button" class="chip" data-meal="lunch" onclick="toggleMeal(this)">Lunch</button>
+        <button type="button" class="chip" data-meal="obiad" onclick="toggleMeal(this)">Obiad</button>
+        <button type="button" class="chip" data-meal="kolacja" onclick="toggleMeal(this)">Kolacja</button>
+      </div>
+    </div>
+    <label>Ile porcji daje ten przepis (ilości składników poniżej = na tyle porcji)</label>
+    <input type="number" id="f-portions" value="1" min="1" step="1">
+    <label>Krótki opis / wstęp (opcjonalnie)</label>
+    <textarea id="f-desc" rows="2" placeholder="np. Szybkie, sycące danie na ciepłe dni..."></textarea>
+    <label>Dodatkowa notatka / wskazówka (opcjonalnie)</label>
+    <textarea id="f-note" rows="2" placeholder="np. Przechowuj w lodówce do 3 dni..."></textarea>
+  </div>
+
+  <div class="card">
+    <h2>Stałe składniki (te, które są zawsze, niezależnie od wariantu)</h2>
+    <p class="hint">Jednostki: płyny → ml, stałe na wagę → g, policzalne → sztuka / ząbek / kromka / plaster / garść. Trzymanie się tego samego zapisu dla tego samego składnika w różnych przepisach sprawia, że lista zakupów poprawnie je sumuje.</p>
+    <div id="fixed-list"></div>
+    <button type="button" class="add-btn" onclick="addFixedIngredient()">+ Dodaj składnik</button>
+  </div>
+
+  <div class="card">
+    <h2>Warianty do wyboru (opcjonalnie — np. "ryż LUB kasza")</h2>
+    <p class="hint">Zostaw puste, jeśli przepis nie ma żadnych wyborów. Każda grupa to jedno pytanie (np. "Baza"), a w niej kilka opcji do wyboru (np. "Ryż" / "Kasza"), z własnymi składnikami.</p>
+    <div id="groups-list"></div>
+    <button type="button" class="add-btn" onclick="addGroup()">+ Dodaj grupę wariantów</button>
+  </div>
+
+  <div class="card">
+    <h2>Wykonanie (kroki)</h2>
+    <div id="steps-list"></div>
+    <button type="button" class="add-btn" onclick="addStep()">+ Dodaj krok</button>
+  </div>
+
+  <button class="generate-btn" onclick="generate()">Generuj kod</button>
+
+  <div class="card" style="margin-top:16px;">
+    <h2>Wynik — skopiuj i wklej do recipes-data.js</h2>
+    <div class="out-wrap">
+      <button class="copy-btn" id="copy-btn" onclick="copyOutput()">Kopiuj</button>
+      <textarea id="output" readonly placeholder="Kliknij 'Generuj kod' powyżej…"></textarea>
+    </div>
+  </div>
+</div>
+
+<script>
+let kind = "recipe";
+let fixedIngredients = [];
+let groups = [];
+let steps = [];
+const UNITS = ["g","ml","sztuka","ząbek","kromka","plaster","garść","łyżka","łyżeczka","szczypta"];
+
+function slugify(str){
+  const map = {"ą":"a","ć":"c","ę":"e","ł":"l","ń":"n","ó":"o","ś":"s","ź":"z","ż":"z"};
+  return str.toLowerCase().split("").map(function(ch){ return map[ch] || ch; }).join("")
+    .replace(/[^a-z0-9\s_-]/g,"").trim().replace(/\s+/g,"_").replace(/_+/g,"_");
+}
+function onNameChange(){
+  const idField = document.getElementById("f-id");
+  if(!idField.dataset.touched) idField.value = slugify(document.getElementById("f-name").value);
+}
+document.getElementById("f-id").addEventListener("input", function(){ this.dataset.touched = "1"; });
+
+function setKind(k){
+  kind = k;
+  document.getElementById("btn-recipe").classList.toggle("active", k==="recipe");
+  document.getElementById("btn-addon").classList.toggle("active", k==="addon");
+  document.getElementById("meals-block").style.display = k==="recipe" ? "block" : "none";
+}
+function toggleMeal(btn){ btn.classList.toggle("active"); }
+
+function unitSelectHTML(current){
+  let html = '<select class="ing-unit">';
+  UNITS.forEach(function(u){ html += '<option '+(u===current?'selected':'')+'>'+u+'</option>'; });
+  html += '</select>';
+  return html;
+}
+
+function renderIngredientRows(containerId, list){
+  const el = document.getElementById(containerId);
+  el.innerHTML = list.map(function(ing, i){
+    return '<div class="ing-row">' +
+      '<input type="text" class="ing-name" placeholder="Nazwa składnika" value="'+(ing.name||"")+'" oninput="updateIngField(\''+containerId+'\','+i+',\'name\',this.value)">' +
+      '<input type="number" class="ing-amt" placeholder="Ilość" value="'+(ing.amount||"")+'" oninput="updateIngField(\''+containerId+'\','+i+',\'amount\',this.value)">' +
+      unitSelectHTML(ing.unit).replace('<select', '<select onchange="updateIngField(\''+containerId+'\','+i+',\'unit\',this.value)"') +
+      '<button type="button" class="rm-btn" onclick="removeIngredient(\''+containerId+'\','+i+')">&times;</button>' +
+      '</div>';
+  }).join("");
+}
+function getListByContainer(containerId){
+  if(containerId==="fixed-list") return fixedIngredients;
+  const m = containerId.match(/^group-(\d+)-option-(\d+)$/);
+  if(m) return groups[+m[1]].options[+m[2]].ingredients;
+  return [];
+}
+function updateIngField(containerId, idx, field, value){
+  const list = getListByContainer(containerId);
+  list[idx][field] = field==="amount" ? parseFloat(value)||0 : value;
+}
+function removeIngredient(containerId, idx){
+  getListByContainer(containerId).splice(idx,1);
+  if(containerId==="fixed-list") renderIngredientRows("fixed-list", fixedIngredients);
+  else renderGroups();
+}
+function addFixedIngredient(){
+  fixedIngredients.push({name:"",amount:0,unit:"g"});
+  renderIngredientRows("fixed-list", fixedIngredients);
+}
+
+function renderGroups(){
+  const el = document.getElementById("groups-list");
+  el.innerHTML = groups.map(function(g, gi){
+    let html = '<div class="group-box"><div class="group-box-top"><strong>Grupa '+(gi+1)+'</strong>' +
+      '<button type="button" class="rm-btn" onclick="removeGroup('+gi+')">&times; usuń grupę</button></div>';
+    html += '<label>Nazwa grupy (np. "Baza", "Białko", "Słodzik")</label>' +
+      '<input type="text" value="'+(g.label||"")+'" oninput="updateGroupLabel('+gi+',this.value)">';
+    g.options.forEach(function(opt, oi){
+      html += '<div class="option-box"><div class="group-box-top"><strong>Opcja '+(oi+1)+'</strong>' +
+        '<button type="button" class="rm-btn" onclick="removeOption('+gi+','+oi+')">&times;</button></div>' +
+        '<input type="text" placeholder="Nazwa opcji (np. Ryż)" value="'+(opt.label||"")+'" oninput="updateOptionLabel('+gi+','+oi+',this.value)">' +
+        '<div id="group-'+gi+'-option-'+oi+'"></div>' +
+        '<button type="button" class="add-btn" onclick="addOptionIngredient('+gi+','+oi+')">+ Składnik dla tej opcji</button>' +
+        '</div>';
+    });
+    html += '<button type="button" class="add-btn" onclick="addOption('+gi+')">+ Dodaj opcję do tej grupy</button></div>';
+    return html;
+  }).join("");
+  groups.forEach(function(g, gi){
+    g.options.forEach(function(opt, oi){ renderIngredientRows("group-"+gi+"-option-"+oi, opt.ingredients); });
+  });
+}
+function updateGroupLabel(gi, val){ groups[gi].label = val; }
+function updateOptionLabel(gi, oi, val){ groups[gi].options[oi].label = val; }
+function addGroup(){ groups.push({label:"", options:[]}); renderGroups(); }
+function removeGroup(gi){ groups.splice(gi,1); renderGroups(); }
+function addOption(gi){ groups[gi].options.push({label:"", ingredients:[]}); renderGroups(); }
+function removeOption(gi, oi){ groups[gi].options.splice(oi,1); renderGroups(); }
+function addOptionIngredient(gi, oi){ groups[gi].options[oi].ingredients.push({name:"",amount:0,unit:"g"}); renderGroups(); }
+
+function renderSteps(){
+  const el = document.getElementById("steps-list");
+  el.innerHTML = steps.map(function(s, i){
+    return '<div class="step-row">' +
+      '<textarea rows="2" placeholder="Opisz krok…" oninput="updateStep('+i+',this.value)">'+(s||"")+'</textarea>' +
+      '<button type="button" class="rm-btn" onclick="removeStep('+i+')">&times;</button>' +
+      '</div>';
+  }).join("");
+}
+function updateStep(i, val){ steps[i] = val; }
+function addStep(){ steps.push(""); renderSteps(); }
+function removeStep(i){ steps.splice(i,1); renderSteps(); }
+
+function jsStr(s){ return JSON.stringify(s||""); }
+function jsArr(arr){ return JSON.stringify(arr); }
+
+function generate(){
+  const id = document.getElementById("f-id").value.trim() || "nowy_przepis";
+  const name = document.getElementById("f-name").value.trim();
+  const portions = parseInt(document.getElementById("f-portions").value,10) || 1;
+  const desc = document.getElementById("f-desc").value.trim();
+  const note = document.getElementById("f-note").value.trim();
+  const cleanSteps = steps.map(function(s){return s.trim();}).filter(Boolean);
+  const cleanFixed = fixedIngredients.filter(function(i){return i.name && i.name.trim();});
+
+  let out = "  { id:"+jsStr(id)+", name:"+jsStr(name)+", ";
+  if(kind==="recipe"){
+    const meals = Array.from(document.querySelectorAll("#meals-chips .chip.active")).map(function(b){return b.getAttribute("data-meal");});
+    out += "meals:"+jsArr(meals)+", portions:"+portions+",\n";
+  } else {
+    out += "portions:"+portions+",\n";
+  }
+  out += "    description:"+jsStr(desc)+",\n";
+  out += "    instructions:"+jsArr(cleanSteps)+",\n";
+  if(note) out += "    note:"+jsStr(note)+",\n";
+  out += "    fixed:[\n";
+  cleanFixed.forEach(function(ing){
+    out += "      {name:"+jsStr(ing.name)+",amount:"+(ing.amount||0)+",unit:"+jsStr(ing.unit)+"},\n";
+  });
+  out += "    ],\n";
+  out += "    variantGroups:[\n";
+  groups.forEach(function(g){
+    if(!g.label) return;
+    out += "      { id:"+jsStr(slugify(g.label))+", label:"+jsStr(g.label)+", options:[\n";
+    g.options.forEach(function(opt){
+      if(!opt.label) return;
+      out += "        { id:"+jsStr(slugify(opt.label))+", label:"+jsStr(opt.label)+", ingredients:[";
+      const cleanOptIng = (opt.ingredients||[]).filter(function(i){return i.name && i.name.trim();});
+      out += cleanOptIng.map(function(ing){ return "{name:"+jsStr(ing.name)+",amount:"+(ing.amount||0)+",unit:"+jsStr(ing.unit)+"}"; }).join(", ");
+      out += "] },\n";
+    });
+    out += "      ]},\n";
+  });
+  out += "    ],\n";
+  out += "  },";
+
+  document.getElementById("output").value = out;
+}
+function copyOutput(){
+  const ta = document.getElementById("output");
+  ta.select();
+  document.execCommand("copy");
+  const btn = document.getElementById("copy-btn");
+  btn.textContent = "Skopiowano!";
+  btn.classList.add("copied");
+  setTimeout(function(){ btn.textContent = "Kopiuj"; btn.classList.remove("copied"); }, 1500);
+}
+
+renderIngredientRows("fixed-list", fixedIngredients);
+renderGroups();
+renderSteps();
+</script>
+</body>
+</html>
