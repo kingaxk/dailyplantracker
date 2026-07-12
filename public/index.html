@@ -181,7 +181,12 @@ const CATEGORIES = [
   { id:"morning", name:"Poranna rutyna", items:[
     { id:"water", name:"Szklanka wody", type:"simple" },
     { id:"scent_music", name:"Zapach + muzyka", type:"note", notePrompt:"Jaki mam nastrój z rana?" },
-    { id:"acupressure", name:"Akupresura + masaż szyi", type:"note", notePrompt:"Ile minut trwało?" },
+    { id:"acupressure", name:"Akupresura", type:"note", notePrompt:"Ile minut trwało?" },
+    { id:"supplements", name:"Shot odpornościowy + suplementy/leki", type:"nested", subItems:[], editable:true },
+    { id:"day_plan", name:"Plan na dzień", type:"note", notePrompt:"Co jest dziś najważniejsze?" },
+  ]},
+  { id:"daily_routine", name:"Dzienna rutyna", items:[
+    { id:"neck_massage", name:"Masaż szyi", type:"note", notePrompt:"Ile minut trwało?" },
     { id:"breathing", name:"Ćwiczenia oddechowe", type:"nested", subItems:["HRV"], editable:true },
     { id:"speech", name:"Ćwiczenia logopedyczne", type:"nested", editable:true, subItems:[
       "Wyścigówki (na, ne, nu, no, ne, ny)",
@@ -192,8 +197,7 @@ const CATEGORIES = [
       "Przyklejanie języka do tylnego podniebienia patyczkami",
       "Masaż policzków",
     ]},
-    { id:"supplements", name:"Shot odpornościowy + suplementy/leki", type:"nested", subItems:[], editable:true },
-    { id:"day_plan", name:"Plan na dzień", type:"note", notePrompt:"Co jest dziś najważniejsze?" },
+    { id:"pelvic_training", name:"Trening miednicy", type:"note" },
   ]},
   { id:"physical", name:"Aktywność fizyczna", items:[
     { id:"strength", name:"Trening siłowy", type:"log", logFields:[
@@ -248,6 +252,13 @@ const CATEGORIES = [
 
 function describeMealSelection(mealData){
   if(!mealData || !mealData.recipeId) return "";
+  if(mealData.recipeId==="_kupne") return "Kupne"+(mealData.note?": "+mealData.note:"");
+  if(mealData.recipeId==="_inne"){
+    let s = "Inne"+(mealData.note?": "+mealData.note:"");
+    const extra = mealData.extraIngredients||[];
+    if(extra.length) s += " [składniki: "+extra.map(function(i){return i.name+" "+fmtAmountSimple(i.amount)+" "+i.unit;}).join(", ")+"]";
+    return s;
+  }
   const recipe = findRecipe(mealData.recipeId);
   if(!recipe) return "";
   const parts = [recipe.name];
@@ -281,6 +292,11 @@ function describeMealSelection(mealData){
 function computeMealIngredients(mealData){
   const results = [];
   if(!mealData || !mealData.recipeId) return results;
+  if(mealData.recipeId==="_kupne") return results;
+  if(mealData.recipeId==="_inne"){
+    (mealData.extraIngredients||[]).forEach(function(ing){ results.push({ name:ing.name, amount:ing.amount, unit:ing.unit, source:"Inne" }); });
+    return results;
+  }
   const recipe = findRecipe(mealData.recipeId);
   if(!recipe) return results;
   const scale = 1/(recipe.portions||1);
@@ -309,7 +325,7 @@ function computeMealIngredients(mealData){
 const CATEGORY_HEX = {
   morning:"#D98B5A", physical:"#6E9B7A", meals:"#A9724A",
   growth:"#6C82A6", self_focus:"#9C86A8", social:"#C97288", evening:"#55647F",
-  somatyka:"#B25D4D",
+  somatyka:"#B25D4D", daily_routine:"#5D8A82",
 };
 const ALL_ITEMS = [];
 CATEGORIES.forEach(cat=>cat.items.forEach(it=>ALL_ITEMS.push({ ...it, catId:cat.id, catName:cat.name })));
@@ -413,6 +429,12 @@ function listDates(){
 // Firestore .set() on a deterministic doc ID (date_itemId) is a plain overwrite —
 // unlike the old Sheets version, there's no row number to discover and no race
 // condition possible: whichever write reaches the server last simply wins.
+function isTypingActively(){
+  const active = document.activeElement;
+  const appEl = document.getElementById("app");
+  return !!(active && (active.tagName==="TEXTAREA" || active.tagName==="INPUT") && appEl && appEl.contains(active));
+}
+
 async function pushRow(date, itemId, category, itemName, done, note, extraObj){
   const k = keyFor(date, itemId);
   const localRow = { Date:date, ItemId:itemId, Category:category||"", ItemName:itemName||"", Done: done?"TRUE":"FALSE", Note: note||"", ExtraJSON: JSON.stringify(extraObj), UpdatedAt: new Date().toISOString() };
@@ -422,7 +444,10 @@ async function pushRow(date, itemId, category, itemName, done, note, extraObj){
 
   pendingSync.add(k);
   syncStatus = "saving";
-  render();
+  // While she's actively typing in THIS note's textarea, skip re-rendering entirely —
+  // destroying and recreating the textarea (even briefly) closes the mobile keyboard,
+  // and a programmatic focus() call afterwards often can't reopen it (especially iOS).
+  if(!isTypingActively()) render();
 
   try{
     await db.collection("users").doc(currentUser.uid).collection("entries").doc(entryDocId(date,itemId)).set(localRow);
@@ -432,7 +457,7 @@ async function pushRow(date, itemId, category, itemName, done, note, extraObj){
     pendingSync.delete(k);
     syncStatus = "error";
   }
-  render();
+  if(!isTypingActively()) render();
 }
 
 function updateDayItem(dateStr, itemId, updater){
@@ -594,7 +619,7 @@ function renderHeader(){
 }
 const NAV_ICONS = {
   habits: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>',
-  meals: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>',
+  meals: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><line x1="6.5" y1="7" x2="6.5" y2="11"/><line x1="6.5" y1="11" x2="6.5" y2="17"/><line x1="5.2" y1="7" x2="5.2" y2="10"/><line x1="7.8" y1="7" x2="7.8" y2="10"/><line x1="17" y1="7" x2="17" y2="17"/><path d="M15.7 7v3a1.3 1.3 0 0 0 1.3 1.3"/></svg>',
   shopping: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>',
   notes: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>',
   dashboard: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="12" width="4" height="8" rx="1"/><rect x="10" y="7" width="4" height="13" rx="1"/><rect x="16" y="3" width="4" height="17" rx="1"/></svg>',
@@ -810,14 +835,43 @@ function renderFullRecipeText(recipe, variants){
   return html;
 }
 
+function mealSlotLabel(data){
+  if(data.recipeId==="_kupne") return "Kupne";
+  if(data.recipeId==="_inne") return "Inne"+(data.note?": "+data.note:"");
+  if(data.recipeId){ const r = findRecipe(data.recipeId); if(r) return r.name; }
+  return "— wybierz —";
+}
+
 function renderMealSlotInner(item, data, dateStr){
   const recipe = data.recipeId ? findRecipe(data.recipeId) : null;
+  const isSpecial = data.recipeId==="_kupne" || data.recipeId==="_inne";
   let html = '<select class="rd-select" style="width:100%;max-width:100%;margin-bottom:10px" data-action="recipe-select" data-item="'+item.id+'" data-date="'+dateStr+'"><option value="">— wybierz danie —</option>';
   recipesForMeal(item.mealTag).forEach(function(r){
     html += '<option value="'+r.id+'" '+(data.recipeId===r.id?'selected':'')+'>'+escapeHTML(r.name)+'</option>';
   });
+  html += '<option value="_kupne" '+(data.recipeId==="_kupne"?'selected':'')+'>Kupne</option>';
+  html += '<option value="_inne" '+(data.recipeId==="_inne"?'selected':'')+'>Inne</option>';
   html += '</select>';
-  if(recipe && recipe.variantGroups.length){
+
+  if(isSpecial){
+    html += '<textarea class="rd-textarea" rows="2" placeholder="'+(data.recipeId==="_kupne"?"Co dokładnie kupione?":"Co to za posiłek?")+'" data-meal-note-item="'+item.id+'" data-date="'+dateStr+'">'+escapeHTML(data.note||"")+'</textarea>';
+  }
+  if(data.recipeId==="_inne"){
+    const extra = data.extraIngredients || [];
+    html += '<label class="rd-h3" style="margin-top:10px">Składniki do listy zakupów</label><div class="rd-sublist">';
+    extra.forEach(function(ing,idx){
+      html += '<div class="rd-logentry"><span>'+escapeHTML(ing.name)+'</span><span>'+fmtAmountSimple(ing.amount)+' '+escapeHTML(ing.unit)+'</span>' +
+        '<button data-action="remove-extra-ingredient" data-item="'+item.id+'" data-date="'+dateStr+'" data-idx="'+idx+'">&times;</button></div>';
+    });
+    html += '<div class="rd-logform">' +
+      '<input class="rd-log-main" placeholder="Nazwa składnika" id="extradraft-'+item.id+'-name">' +
+      '<input class="rd-log-sub" placeholder="Ilość" id="extradraft-'+item.id+'-amount">' +
+      '<select class="rd-log-sub" id="extradraft-'+item.id+'-unit"><option>g</option><option>ml</option><option>sztuka</option><option>ząbek</option><option>kromka</option><option>plaster</option><option>garść</option></select>' +
+      '<button class="rd-logadd" style="background:'+CATEGORY_HEX.meals+'" data-action="add-extra-ingredient" data-item="'+item.id+'" data-date="'+dateStr+'">+ Dodaj</button>' +
+      '</div></div>';
+  }
+
+  if(!isSpecial && recipe && recipe.variantGroups.length){
     recipe.variantGroups.forEach(function(g){
       const chosen = (data.variants && data.variants[g.id]) || "";
       html += '<div style="margin-bottom:8px"><label class="rd-hint" style="display:block;margin-bottom:4px">'+escapeHTML(g.label)+'</label>' +
@@ -826,6 +880,7 @@ function renderMealSlotInner(item, data, dateStr){
       html += '</select></div>';
     });
   }
+  if(isSpecial) return html;
   html += '<label class="rd-h3" style="margin-top:10px">Dodatki</label><div class="rd-sublist">';
   const relevantAddons = recipe ? ADDONS.filter(function(a){ return (a.tags||[]).some(function(t){ return (recipe.addonTags||[]).indexOf(t)!==-1; }); }) : [];
   if(relevantAddons.length===0){
@@ -857,14 +912,13 @@ function renderMealSlotInner(item, data, dateStr){
 }
 
 function renderMealSlotAccordion(item, data, dateStr, expandKey){
-  const recipe = data.recipeId ? findRecipe(data.recipeId) : null;
   const expanded = state.expandedMealKey === expandKey;
   const colorVar = CATEGORY_HEX.meals;
   let html = '<section class="rd-cat">' +
     '<button class="rd-cat-head" data-action="toggle-meal-slot" data-key="'+expandKey+'">' +
     '<span class="rd-cat-bar" style="background:'+colorVar+'"></span>' +
     '<span class="rd-cat-name">'+escapeHTML(item.name)+'</span>' +
-    '<span class="rd-cat-count">'+(recipe?escapeHTML(recipe.name):'— wybierz —')+'</span>' +
+    '<span class="rd-cat-count">'+escapeHTML(mealSlotLabel(data))+'</span>' +
     '<span class="rd-cat-chev">'+(expanded?'&#9662;':'&#9656;')+'</span>' +
     '</button>';
   if(expanded){
@@ -875,13 +929,12 @@ function renderMealSlotAccordion(item, data, dateStr, expandKey){
 }
 
 function renderMealSlotRow(item, data, dateStr, expandKey, isLast){
-  const recipe = data.recipeId ? findRecipe(data.recipeId) : null;
   const expanded = state.expandedMealKey === expandKey;
   const dividerStyle = isLast ? "" : "border-bottom:1px solid var(--line);";
   let html = '<div style="'+dividerStyle+'"><div class="rd-row" style="border-bottom:none">' +
     '<button class="rd-row-main" data-action="toggle-meal-slot" data-key="'+expandKey+'">' +
     '<span class="rd-row-name">'+escapeHTML(item.name)+'</span>' +
-    '<span class="rd-row-right"><span class="rd-count-badge">'+(recipe?escapeHTML(recipe.name):'— wybierz —')+'</span>' +
+    '<span class="rd-row-right"><span class="rd-count-badge">'+escapeHTML(mealSlotLabel(data))+'</span>' +
     '<span class="rd-chev">'+(expanded?'&#9662;':'&#9656;')+'</span></span></button></div>';
   if(expanded){
     html += '<div class="rd-detail">' + renderMealSlotInner(item, data, dateStr) + '</div>';
@@ -1041,7 +1094,7 @@ function renderDashboard(){
       return { name:item.name, n:n };
     });
     const totalN = counts.reduce(function(s,c){return s+c.n;},0);
-    html += '<h3 class="rd-h3" style="color:'+CATEGORY_HEX[cat.id]+'">'+escapeHTML(cat.name)+' w tym zakresie (osobno, nie wliczane do realizacji)</h3>';
+    html += '<h3 class="rd-h3" style="color:'+CATEGORY_HEX[cat.id]+'">'+escapeHTML(cat.name)+'</h3>';
     html += '<div class="rd-barlist" style="border-left:3px solid '+CATEGORY_HEX[cat.id]+'">';
     if(totalN===0){
       html += '<span class="rd-hint">Brak odnotowanych wystąpień w tym zakresie.</span>';
@@ -1100,7 +1153,9 @@ function computeShoppingList(startDate, endDate){
     MEAL_SLOT_IDS.forEach(function(slotId){
       const mealData = dayItems[slotId];
       if(!mealData || !mealData.recipeId) return;
-      recipeUsage[mealData.recipeId] = (recipeUsage[mealData.recipeId]||0)+1;
+      if(mealData.recipeId!=="_kupne" && mealData.recipeId!=="_inne"){
+        recipeUsage[mealData.recipeId] = (recipeUsage[mealData.recipeId]||0)+1;
+      }
       computeMealIngredients(mealData).forEach(function(ing){ allIngredients.push(ing); });
       const addons = mealData.addons || {};
       Object.keys(addons).forEach(function(aid){ addonUsage[aid] = (addonUsage[aid]||0)+1; });
@@ -1336,6 +1391,23 @@ function handleClick(e){
     updateDayItem(state.viewDate, id, function(d){ return { ...d, logEntries: (d.logEntries||[]).filter(function(_,i){return i!==idx;}) }; });
     render(); return;
   }
+  if(action==="add-extra-ingredient"){
+    const id = el.getAttribute("data-item");
+    const dateStr = el.getAttribute("data-date") || state.viewDate;
+    const name = document.getElementById("extradraft-"+id+"-name").value.trim();
+    const amount = parseFloat(document.getElementById("extradraft-"+id+"-amount").value) || 0;
+    const unit = document.getElementById("extradraft-"+id+"-unit").value;
+    if(!name) return;
+    updateDayItem(dateStr, id, function(d){ return { ...d, extraIngredients: [...(d.extraIngredients||[]), {name:name, amount:amount, unit:unit}] }; });
+    render(); return;
+  }
+  if(action==="remove-extra-ingredient"){
+    const id = el.getAttribute("data-item");
+    const dateStr = el.getAttribute("data-date") || state.viewDate;
+    const idx = parseInt(el.getAttribute("data-idx"),10);
+    updateDayItem(dateStr, id, function(d){ return { ...d, extraIngredients: (d.extraIngredients||[]).filter(function(_,i){return i!==idx;}) }; });
+    render(); return;
+  }
 
   if(action==="filter-notes"){ state.notesFilter = el.getAttribute("data-cat"); render(); return; }
   if(action==="set-range"){ state.dashRange = el.getAttribute("data-range"); render(); return; }
@@ -1446,18 +1518,29 @@ let noteTimer = null;
 function handleInput(e){
   const el = e.target;
   const itemId = el.getAttribute && el.getAttribute("data-note-item");
+  const mealItemId = el.getAttribute && el.getAttribute("data-meal-note-item");
   if(itemId){
     const val = el.value;
     if(noteTimer) clearTimeout(noteTimer);
     noteTimer = setTimeout(function(){ updateDayItem(state.viewDate, itemId, function(d){ return { ...d, note: val }; }); }, 600);
+  } else if(mealItemId){
+    const val = el.value;
+    const dateStr = el.getAttribute("data-date") || state.viewDate;
+    if(noteTimer) clearTimeout(noteTimer);
+    noteTimer = setTimeout(function(){ updateDayItem(dateStr, mealItemId, function(d){ return { ...d, note: val }; }); }, 600);
   }
 }
 function handleBlur(e){
   const el = e.target;
   const itemId = el.getAttribute && el.getAttribute("data-note-item");
+  const mealItemId = el.getAttribute && el.getAttribute("data-meal-note-item");
   if(itemId){
     if(noteTimer) clearTimeout(noteTimer);
     updateDayItem(state.viewDate, itemId, function(d){ return { ...d, note: el.value }; });
+  } else if(mealItemId){
+    if(noteTimer) clearTimeout(noteTimer);
+    const dateStr = el.getAttribute("data-date") || state.viewDate;
+    updateDayItem(dateStr, mealItemId, function(d){ return { ...d, note: el.value }; });
   }
 }
 
