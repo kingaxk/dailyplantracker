@@ -46,6 +46,10 @@
   .rd-dayarc-seg{flex:1;height:36px;border-radius:8px;border:none;position:relative;overflow:hidden;cursor:pointer;padding:0;}
   .rd-dayarc-fill{position:absolute;left:0;bottom:0;width:100%;transition:height .35s ease;}
   .rd-daysummary{text-align:center;font-size:13px;color:var(--ink-soft);margin-bottom:6px;}
+  .rd-nutrition-card{background:var(--bg-card);border-radius:14px;padding:14px 16px;margin:10px 0;box-shadow:0 1px 3px rgba(43,51,40,0.06);}
+  .rd-nutrition-kcal{font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--ink);text-align:center;margin-bottom:8px;}
+  .rd-nutrition-macro{display:flex;justify-content:center;gap:16px;font-size:13px;color:var(--ink-soft);flex-wrap:wrap;}
+  .rd-nutrition-macro b{color:var(--ink);}
 
   .rd-cat{margin-top:22px;}
   .rd-cat-head{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;padding:4px 0;cursor:pointer;}
@@ -322,6 +326,56 @@ function computeMealIngredients(mealData){
   return results;
 }
 
+function ingredientNutrition(name, amount, unit){
+  const key = name.trim().toLowerCase();
+  const unitKey = unit.trim().toLowerCase();
+  const perUnitKey = key+"|"+unitKey;
+  if(NUTRITION_PER_UNIT[perUnitKey]){
+    const v = NUTRITION_PER_UNIT[perUnitKey];
+    return { protein: v[0]*amount, carbs: v[1]*amount, fat: v[2]*amount };
+  }
+  const per100 = NUTRITION_DB[key];
+  if(!per100) return null;
+  let grams;
+  if(unitKey==="g" || unitKey==="ml") grams = amount;
+  else if(NUTRITION_UNIT_G[unitKey] !== undefined) grams = amount * NUTRITION_UNIT_G[unitKey];
+  else if(unitKey==="sztuka") grams = amount * 100;
+  else if(unitKey==="ząbek") grams = amount * 3;
+  else if(unitKey==="kromka") grams = amount * 30;
+  else grams = amount;
+  return { protein: per100[0]*grams/100, carbs: per100[1]*grams/100, fat: per100[2]*grams/100 };
+}
+
+function computeMealNutrition(mealData){
+  const ings = computeMealIngredients(mealData);
+  let protein=0, carbs=0, fat=0, unknown=false;
+  ings.forEach(function(ing){
+    const n = ingredientNutrition(ing.name, ing.amount, ing.unit);
+    if(!n){ unknown=true; return; }
+    protein += n.protein; carbs += n.carbs; fat += n.fat;
+  });
+  return { protein:protein, carbs:carbs, fat:fat, kcal: protein*4+carbs*4+fat*9, unknown:unknown };
+}
+
+function computeDayNutrition(dateStr){
+  const dayItems = getDayItems(dateStr).items;
+  let protein=0, carbs=0, fat=0, kcal=0, anyMeal=false, anyUnknown=false, anyUnpriced=false;
+  MEAL_SLOT_IDS.forEach(function(slotId){
+    const mealData = dayItems[slotId];
+    if(!mealData || !mealData.recipeId) return;
+    anyMeal = true;
+    if(mealData.recipeId==="_kupne"){
+      if(mealData.manualKcal){ kcal += mealData.manualKcal; }
+      else { anyUnpriced = true; }
+      return;
+    }
+    const n = computeMealNutrition(mealData);
+    protein += n.protein; carbs += n.carbs; fat += n.fat; kcal += n.kcal;
+    if(n.unknown) anyUnknown = true;
+  });
+  return { protein:protein, carbs:carbs, fat:fat, kcal:kcal, anyMeal:anyMeal, anyUnknown:anyUnknown, anyUnpriced:anyUnpriced };
+}
+
 const CATEGORY_HEX = {
   morning:"#D98B5A", physical:"#6E9B7A", meals:"#A9724A",
   growth:"#6C82A6", self_focus:"#9C86A8", social:"#C97288", evening:"#55647F",
@@ -347,12 +401,12 @@ function humanDateShort(dateStr){ return parseDateStr(dateStr).toLocaleDateStrin
    Firebase Console > Project Settings > General > Your apps > (ikona web </>)
    ============================================================================ */
 const firebaseConfig = {
-  apiKey: "AIzaSyAc2KGXuRsQwXnxFr4DjA9Hph3OEQZ7Z2E",
-  authDomain: "daily-plan-tracker-3ec06.firebaseapp.com",
-  projectId: "daily-plan-tracker-3ec06",
-  storageBucket: "daily-plan-tracker-3ec06.firebasestorage.app",
-  messagingSenderId: "863267659148",
-  appId: "1:863267659148:web:1a7d0d7724400f8c4dcaa9"
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: "",
 };
 
 /* ============================== FIREBASE INIT / AUTH ============================== */
@@ -619,13 +673,13 @@ function renderHeader(){
 }
 const NAV_ICONS = {
   habits: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>',
-  meals: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><line x1="6.5" y1="7" x2="6.5" y2="11"/><line x1="6.5" y1="11" x2="6.5" y2="17"/><line x1="5.2" y1="7" x2="5.2" y2="10"/><line x1="7.8" y1="7" x2="7.8" y2="10"/><line x1="17" y1="7" x2="17" y2="17"/><path d="M15.7 7v3a1.3 1.3 0 0 0 1.3 1.3"/></svg>',
+  meals: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5.5"/><line x1="3" y1="5" x2="3" y2="19"/><line x1="1.6" y1="5" x2="1.6" y2="8.5"/><line x1="4.4" y1="5" x2="4.4" y2="8.5"/><line x1="21" y1="5" x2="21" y2="19"/><path d="M19.7 5v3.2a1.3 1.3 0 0 0 1.3 1.3"/></svg>',
   shopping: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>',
   notes: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>',
   dashboard: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="12" width="4" height="8" rx="1"/><rect x="10" y="7" width="4" height="13" rx="1"/><rect x="16" y="3" width="4" height="17" rx="1"/></svg>',
 };
 function renderBottomNav(){
-  const tabs=[["habits","Nawyki"],["meals","Jadłospis"],["shopping","Zakupy"],["notes","Notatki"],["dashboard","Dashboard"]];
+  const tabs=[["shopping","Zakupy"],["meals","Jadłospis"],["habits","Nawyki"],["dashboard","Dashboard"],["notes","Notatki"]];
   return '<nav class="rd-bottomnav">' + tabs.map(function(t){
     return '<button class="rd-tab'+(state.activeTab===t[0]?' active':'')+'" data-action="set-tab" data-tab="'+t[0]+'" aria-label="'+t[1]+'" title="'+t[1]+'">'+NAV_ICONS[t[0]]+'</button>';
   }).join('') + '</nav>';
@@ -836,7 +890,7 @@ function renderFullRecipeText(recipe, variants){
 }
 
 function mealSlotLabel(data){
-  if(data.recipeId==="_kupne") return "Kupne";
+  if(data.recipeId==="_kupne") return "Kupne"+(data.manualKcal?" ("+data.manualKcal+" kcal)":"");
   if(data.recipeId==="_inne") return "Inne"+(data.note?": "+data.note:"");
   if(data.recipeId){ const r = findRecipe(data.recipeId); if(r) return r.name; }
   return "— wybierz —";
@@ -855,6 +909,10 @@ function renderMealSlotInner(item, data, dateStr){
 
   if(isSpecial){
     html += '<textarea class="rd-textarea" rows="2" placeholder="'+(data.recipeId==="_kupne"?"Co dokładnie kupione?":"Co to za posiłek?")+'" data-meal-note-item="'+item.id+'" data-date="'+dateStr+'">'+escapeHTML(data.note||"")+'</textarea>';
+  }
+  if(data.recipeId==="_kupne"){
+    html += '<label class="rd-hint" style="display:block;margin:8px 0 4px">Kcal (jeśli znasz, np. z opakowania)</label>' +
+      '<input type="number" inputmode="numeric" class="rd-select" style="width:100%;max-width:100%" placeholder="np. 450" value="'+(data.manualKcal||"")+'" data-meal-kcal-item="'+item.id+'" data-date="'+dateStr+'">';
   }
   if(data.recipeId==="_inne"){
     const extra = data.extraIngredients || [];
@@ -943,6 +1001,48 @@ function renderMealSlotRow(item, data, dateStr, expandKey, isLast){
   return html;
 }
 
+function renderNutritionCard(n){
+  if(!n.anyMeal) return '';
+  let html = '<div class="rd-nutrition-card">';
+  html += '<div class="rd-nutrition-kcal">ok. '+Math.round(n.kcal)+' kcal</div>';
+  html += '<div class="rd-nutrition-macro">' +
+    '<span><b>B</b> '+Math.round(n.protein)+'g</span>' +
+    '<span><b>W</b> '+Math.round(n.carbs)+'g</span>' +
+    '<span><b>T</b> '+Math.round(n.fat)+'g</span>' +
+    '</div>';
+  if(n.anyUnpriced) html += '<div class="rd-hint" style="margin-top:6px">Nie wszystkie posiłki "Kupne" mają wpisane kcal — dodaj je w szczegółach posiłku, żeby uwzględnić w sumie.</div>';
+  html += '</div>';
+  return html;
+}
+
+function renderKcalLineChart(dates, values){
+  const w = 320, h = 140, padL = 30, padR = 8, padT = 14, padB = 20;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const maxV = Math.max.apply(null, values.concat([200]));
+  const stepX = values.length>1 ? plotW/(values.length-1) : 0;
+  function xFor(i){ return padL + i*stepX; }
+  function yFor(v){ return padT + plotH - (v/maxV)*plotH; }
+  const pathD = values.map(function(v,i){ return (i===0?'M':'L')+xFor(i).toFixed(1)+','+yFor(v).toFixed(1); }).join(' ');
+  let svg = '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:140px;display:block;">';
+  [0, Math.round(maxV/2), Math.round(maxV)].forEach(function(gv){
+    const gy = yFor(gv);
+    svg += '<line x1="'+padL+'" y1="'+gy.toFixed(1)+'" x2="'+(w-padR)+'" y2="'+gy.toFixed(1)+'" stroke="var(--line)" stroke-width="1"/>';
+    svg += '<text x="2" y="'+(gy+3).toFixed(1)+'" font-size="9" fill="var(--ink-soft)">'+gv+'</text>';
+  });
+  svg += '<path d="'+pathD+'" fill="none" stroke="var(--accent)" stroke-width="2"/>';
+  values.forEach(function(v,i){
+    svg += '<circle cx="'+xFor(i).toFixed(1)+'" cy="'+yFor(v).toFixed(1)+'" r="3" fill="var(--accent)"/>';
+  });
+  const showEvery = dates.length > 9 ? Math.ceil(dates.length/7) : 1;
+  dates.forEach(function(d,i){
+    if(i % showEvery !== 0 && i !== dates.length-1) return;
+    const label = d.slice(8,10)+'.'+d.slice(5,7);
+    svg += '<text x="'+xFor(i).toFixed(1)+'" y="'+(h-4)+'" font-size="8" fill="var(--ink-soft)" text-anchor="middle">'+label+'</text>';
+  });
+  svg += '</svg>';
+  return svg;
+}
+
 function renderMealPlan(){
   const mealsCat = CATEGORIES.find(function(c){ return c.id==="meals"; });
   let html = '<h2 class="rd-h2">Jadłospis</h2>';
@@ -959,6 +1059,7 @@ function renderMealPlan(){
       (!isToday ? '<button class="rd-backtoday" data-action="nav-date-today">Wróć do dziś</button>' : '') +
       '</div>' +
       '<button data-action="nav-date" data-dir="1">&#8250;</button></div>';
+    html += renderNutritionCard(computeDayNutrition(state.viewDate));
     const dayData = getDayItems(state.viewDate).items;
     mealsCat.items.forEach(function(item){
       html += renderMealSlotAccordion(item, dayData[item.id]||{}, state.viewDate, item.id);
@@ -969,6 +1070,22 @@ function renderMealPlan(){
       '<input type="date" value="'+state.mealRangeEnd+'" min="'+state.mealRangeStart+'" data-action="set-meal-range-end">' +
       '</div>';
     const dates = dateRangeList(state.mealRangeStart, state.mealRangeEnd);
+    const dayNutritions = dates.map(function(d){ return computeDayNutrition(d); });
+    const anyData = dayNutritions.some(function(n){ return n.anyMeal; });
+    if(anyData){
+      const kcalValues = dayNutritions.map(function(n){ return Math.round(n.kcal); });
+      const daysWithMeals = dayNutritions.filter(function(n){ return n.anyMeal; });
+      const avg = function(key){ return daysWithMeals.length ? daysWithMeals.reduce(function(s,n){return s+n[key];},0)/daysWithMeals.length : 0; };
+      html += '<div class="rd-nutrition-card">';
+      html += renderKcalLineChart(dates, kcalValues);
+      html += '<div class="rd-nutrition-macro" style="margin-top:8px">' +
+        '<span>Średnio <b>'+Math.round(avg('kcal'))+'</b> kcal/dzień</span>' +
+        '<span><b>B</b> '+Math.round(avg('protein'))+'g</span>' +
+        '<span><b>W</b> '+Math.round(avg('carbs'))+'g</span>' +
+        '<span><b>T</b> '+Math.round(avg('fat'))+'g</span>' +
+        '</div>';
+      html += '</div>';
+    }
     dates.forEach(function(d){
       const dayExpanded = state.expandedMealDay === d;
       const dayItems = getDayItems(d).items;
@@ -1519,6 +1636,7 @@ function handleInput(e){
   const el = e.target;
   const itemId = el.getAttribute && el.getAttribute("data-note-item");
   const mealItemId = el.getAttribute && el.getAttribute("data-meal-note-item");
+  const mealKcalItemId = el.getAttribute && el.getAttribute("data-meal-kcal-item");
   if(itemId){
     const val = el.value;
     if(noteTimer) clearTimeout(noteTimer);
@@ -1528,12 +1646,18 @@ function handleInput(e){
     const dateStr = el.getAttribute("data-date") || state.viewDate;
     if(noteTimer) clearTimeout(noteTimer);
     noteTimer = setTimeout(function(){ updateDayItem(dateStr, mealItemId, function(d){ return { ...d, note: val }; }); }, 600);
+  } else if(mealKcalItemId){
+    const val = parseFloat(el.value) || 0;
+    const dateStr = el.getAttribute("data-date") || state.viewDate;
+    if(noteTimer) clearTimeout(noteTimer);
+    noteTimer = setTimeout(function(){ updateDayItem(dateStr, mealKcalItemId, function(d){ return { ...d, manualKcal: val }; }); }, 600);
   }
 }
 function handleBlur(e){
   const el = e.target;
   const itemId = el.getAttribute && el.getAttribute("data-note-item");
   const mealItemId = el.getAttribute && el.getAttribute("data-meal-note-item");
+  const mealKcalItemId = el.getAttribute && el.getAttribute("data-meal-kcal-item");
   if(itemId){
     if(noteTimer) clearTimeout(noteTimer);
     updateDayItem(state.viewDate, itemId, function(d){ return { ...d, note: el.value }; });
@@ -1541,6 +1665,11 @@ function handleBlur(e){
     if(noteTimer) clearTimeout(noteTimer);
     const dateStr = el.getAttribute("data-date") || state.viewDate;
     updateDayItem(dateStr, mealItemId, function(d){ return { ...d, note: el.value }; });
+  } else if(mealKcalItemId){
+    if(noteTimer) clearTimeout(noteTimer);
+    const dateStr = el.getAttribute("data-date") || state.viewDate;
+    const val = parseFloat(el.value) || 0;
+    updateDayItem(dateStr, mealKcalItemId, function(d){ return { ...d, manualKcal: val }; });
   }
 }
 
