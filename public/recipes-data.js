@@ -549,18 +549,19 @@ const RECIPES = [
     description:"Aksamitny, wysokobiałkowy krem, który smakuje jak luksusowy deser, a ma świetne makro. Idealny na zimno w upalne dni.",
     instructions:["Wszystkie składniki (baza + pasta orzechowa + słodzik + ew. kakao) wrzuć do wysokiego naczynia i blenduj na najwyższych obrotach przez 2-3 minuty, aż masa napowietrzy się i będzie idealnie gładka.", "Możesz dodać czekoladę i owoce.", "Możesz także dodać posiekane (może również namoczone lub podprażone) orzechy.", "Opcjonalnie schłodź w lodówce i/lub przed podaniem udekoruj owocami/orzechami."],
     fixed:[
-      {name:"Pasta orzechowa",amount:35,unit:"g"},
-      {name:"Owoce na wierzch (borówki/maliny)",amount:40,unit:"g"},
+      {name:"Pasta orzechowa",amount:30,unit:"g"},
+      {name:"Owoce na wierzch (borówki/maliny)",amount:35,unit:"g"},
     ],
     variantGroups:[
       { id:"baza", label:"Baza białkowa", options:[
-        { id:"silken", label:"Silken tofu", ingredients:[{name:"Silken tofu",amount:405,unit:"g"}] },
-        { id:"twarog", label:"Twaróg + jogurt", ingredients:[{name:"Twaróg",amount:205,unit:"g"},{name:"Jogurt naturalny",amount:140,unit:"g"}] },
-        { id:"serek", label:"Serek wiejski lekki", ingredients:[{name:"Serek wiejski lekki",amount:275,unit:"g"}] },
+        { id:"silken", label:"Silken tofu", ingredients:[{name:"Silken tofu",amount:365,unit:"g"}] },
+        { id:"twarog", label:"Twaróg + jogurt", ingredients:[{name:"Twaróg",amount:185,unit:"g"},{name:"Jogurt naturalny",amount:125,unit:"g"}] },
+        { id:"serek", label:"Serek wiejski lekki", ingredients:[{name:"Serek wiejski lekki",amount:250,unit:"g"}] },
       ]},
       { id:"slodzik", label:"Słodzik", options:[
-        { id:"miod", label:"Miód / syrop klonowy", ingredients:[{name:"Miód lub syrop klonowy",amount:35,unit:"g"}] },
-        { id:"banan", label:"Banan (mrożony)", ingredients:[{name:"Banan",amount:1.5,unit:"sztuka"}] },
+        { id:"miod", label:"Miód / syrop klonowy", ingredients:[{name:"Miód lub syrop klonowy",amount:30,unit:"g"}] },
+        { id:"banan", label:"Banan (mrożony)", ingredients:[{name:"Banan",amount:1,unit:"sztuka"}] },
+        { id:"ksylitol", label:"Ksylitol", ingredients:[{name:"Ksylitol",amount:10,unit:"g"}] },
       ]},
       { id:"czekolada", label:"Tuning czekoladowy (opcjonalnie)", options:[
         { id:"brak", label:"Bez", ingredients:[] },
@@ -570,6 +571,10 @@ const RECIPES = [
       { id:"orzechy", label:"Orzechy posiekane (opcjonalnie)", options:[
         { id:"brak", label:"Bez", ingredients:[] },
         { id:"tak", label:"Dodaj", ingredients:[{name:"Orzechy posiekane",amount:20,unit:"g"}] },
+      ]},
+      { id:"wafle", label:"Wafle ryżowe (opcjonalnie)", options:[
+        { id:"brak", label:"Bez", ingredients:[] },
+        { id:"tak", label:"Dodaj", ingredients:[{name:"Wafle ryżowe",amount:2,unit:"sztuka"}] },
       ]},
     ],
   },
@@ -988,6 +993,7 @@ const NUTRITION_DB = {
   "komosa ryżowa (sucha)": [14, 64, 6],
   "koperek": [3.5, 7, 1.1],
   "krewetki (obrane)": [24, 0, 0.3],
+  "ksylitol": [0, 0, 0],
   "kukurydza": [3.3, 19, 1.5],
   "kurkuma, kumin, kolendra (przyprawy)": [10, 50, 10],
   "limonka": [0.7, 11, 0.2],
@@ -1088,6 +1094,7 @@ const NUTRITION_DB = {
   "tortilla / chleb / bułka": [8, 49, 4],
   "twaróg": [17, 3.5, 4.5],
   "twaróg chudy / skyr": [14, 3.5, 2.3],
+  "wafle ryżowe": [7, 81, 2.8],
   "wege zamiennik gyrosa": [18, 8, 10],
   "woda": [0, 0, 0],
   "woda lub bulion": [0.2, 0.5, 0],
@@ -1115,6 +1122,7 @@ const NUTRITION_PER_UNIT = {
   "oliwki|sztuka": [0.05, 0.1, 0.3],
   "papryczki chili|sztuka": [0.4, 1.4, 0.1],
   "tortilla|sztuka": [4, 25, 4],
+  "wafle ryżowe|sztuka": [0.63, 7.3, 0.25],
 };
 const NUTRITION_UNIT_G = {
   "garść": 20,

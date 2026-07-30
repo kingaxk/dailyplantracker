@@ -75,6 +75,7 @@
   .rd-textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px;color:var(--ink);resize:vertical;background:#FAFBF8;}
   .rd-sublist{display:flex;flex-direction:column;gap:8px;}
   .rd-sublabel{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;}
+  .rd-qty-btn{width:24px;height:24px;border-radius:50%;border:1px solid var(--line);background:var(--bg-card);color:var(--ink);font-size:15px;line-height:1;cursor:pointer;padding:0;}
   .rd-sublabel input{width:18px;height:18px;}
   .rd-hint{font-size:13px;color:var(--ink-soft);}
 
@@ -314,8 +315,8 @@ function computeMealIngredients(mealData){
   Object.keys(addons).forEach(function(addonId){
     const addon = findAddon(addonId);
     if(!addon) return;
-    const aScale = 1/(addon.portions||1);
     const addonSel = addons[addonId] || {};
+    const aScale = (1/(addon.portions||1)) * (addonSel.qty || 1);
     (addon.fixed||[]).forEach(function(ing){ results.push({ name:ing.name, amount:ing.amount*aScale, unit:ing.unit, source:addon.name }); });
     (addon.variantGroups||[]).forEach(function(g){
       const chosen = addonSel.variants && addonSel.variants[g.id];
@@ -859,10 +860,44 @@ function fmtAmountSimple(n){
   const r = Math.round(n*10)/10;
   return (r % 1 === 0) ? String(r) : String(r).replace(".",",");
 }
+function ingredientGrams(amount, unit){
+  const unitKey = unit.trim().toLowerCase();
+  if(unitKey==="g" || unitKey==="ml") return amount;
+  if(NUTRITION_UNIT_G[unitKey] !== undefined) return amount * NUTRITION_UNIT_G[unitKey];
+  if(unitKey==="sztuka") return amount * 100;
+  if(unitKey==="ząbek") return amount * 3;
+  if(unitKey==="kromka") return amount * 30;
+  return amount;
+}
+
+function computeRecipePortionGrams(recipe, variants){
+  let total = 0;
+  (recipe.fixed||[]).forEach(function(ing){ total += ingredientGrams(ing.amount, ing.unit); });
+  (recipe.variantGroups||[]).forEach(function(g){
+    const isOptional = g.label.toLowerCase().indexOf('opcjonalnie')!==-1;
+    const chosen = variants && variants[g.id];
+    const opt = chosen && g.options.find(function(o){ return o.id===chosen; });
+    if(opt){ (opt.ingredients||[]).forEach(function(ing){ total += ingredientGrams(ing.amount, ing.unit); }); }
+    else if(!isOptional && g.options.length){
+      // no explicit choice made yet - use first real option as a representative estimate
+      const fallback = g.options.find(function(o){ return o.label.trim().toLowerCase()!=='bez'; });
+      if(fallback) (fallback.ingredients||[]).forEach(function(ing){ total += ingredientGrams(ing.amount, ing.unit); });
+    }
+  });
+  const portions = recipe.portions || 1;
+  return { total: total, perPortion: total/portions };
+}
+
 function renderFullRecipeText(recipe, variants){
   if(!recipe) return "";
   let html = '<div class="rd-fulltext">';
   if(recipe.description) html += '<p class="rd-recipe-desc">'+escapeHTML(recipe.description)+'</p>';
+
+  const portions = recipe.portions || 1;
+  const grams = computeRecipePortionGrams(recipe, variants);
+  html += '<p class="rd-hint" style="margin:0 0 10px">' +
+    'Porcje: <strong>'+portions+'</strong> &nbsp;•&nbsp; Wielkość porcji: <strong>ok. '+Math.round(grams.perPortion)+' g</strong>' +
+    '</p>';
 
   if((recipe.fixed||[]).length){
     html += '<h4 class="rd-recipe-subh">Składniki</h4><ul class="rd-recipe-ing">';
@@ -947,7 +982,16 @@ function renderMealSlotInner(item, data, dateStr){
   relevantAddons.forEach(function(a){
     const sel = data.addons && data.addons[a.id];
     const checked = !!sel;
+    const qty = sel && sel.qty ? sel.qty : 1;
     html += '<label class="rd-sublabel"><input type="checkbox" '+(checked?'checked':'')+' data-action="recipe-addon-toggle" data-item="'+item.id+'" data-addon="'+a.id+'" data-date="'+dateStr+'"><span>'+escapeHTML(a.name)+'</span></label>';
+    if(checked){
+      html += '<div style="display:flex;align-items:center;gap:8px;margin:2px 0 6px 30px">' +
+        '<span class="rd-hint" style="margin:0">Ilość porcji:</span>' +
+        '<button class="rd-qty-btn" data-action="addon-qty" data-item="'+item.id+'" data-addon="'+a.id+'" data-date="'+dateStr+'" data-delta="-1">−</button>' +
+        '<span style="min-width:16px;text-align:center">'+qty+'</span>' +
+        '<button class="rd-qty-btn" data-action="addon-qty" data-item="'+item.id+'" data-addon="'+a.id+'" data-date="'+dateStr+'" data-delta="1">+</button>' +
+        '</div>';
+    }
     if(checked && a.variantGroups && a.variantGroups.length){
       a.variantGroups.forEach(function(g){
         const chosenA = (sel.variants && sel.variants[g.id]) || "";
@@ -1488,7 +1532,33 @@ function handleClick(e){
     const dateStr = el.getAttribute("data-date") || state.viewDate;
     updateDayItem(dateStr, id, function(d){
       const addons = { ...(d.addons||{}) };
-      if(el.checked){ addons[addonId] = { variants:{} }; } else { delete addons[addonId]; }
+      if(el.checked){
+        let defaultQty = 1;
+        if(d.recipeId==="kanapki"){
+          const recipe = findRecipe(d.recipeId);
+          const pieczywoGroup = recipe && recipe.variantGroups.find(function(g){ return g.id==="pieczywo"; });
+          const chosenId = d.variants && d.variants["pieczywo"];
+          const opt = pieczywoGroup && pieczywoGroup.options.find(function(o){ return o.id===chosenId; });
+          const firstIng = opt && opt.ingredients && opt.ingredients[0];
+          if(chosenId==="bulka") defaultQty = 3;
+          else if(firstIng && firstIng.amount) defaultQty = firstIng.amount;
+        }
+        addons[addonId] = { variants:{}, qty:defaultQty };
+      } else { delete addons[addonId]; }
+      return { ...d, addons: addons };
+    });
+    render(); return;
+  }
+  if(action==="addon-qty"){
+    const id = el.getAttribute("data-item");
+    const addonId = el.getAttribute("data-addon");
+    const dateStr = el.getAttribute("data-date") || state.viewDate;
+    const delta = parseInt(el.getAttribute("data-delta"),10);
+    updateDayItem(dateStr, id, function(d){
+      const addons = { ...(d.addons||{}) };
+      const cur = addons[addonId] || { variants:{}, qty:1 };
+      const newQty = Math.max(1, (cur.qty||1) + delta);
+      addons[addonId] = { ...cur, qty: newQty };
       return { ...d, addons: addons };
     });
     render(); return;
