@@ -204,7 +204,7 @@ const CATEGORIES = [
     ]},
     { id:"pelvic_training", name:"Trening miednicy", type:"note" },
   ]},
-  { id:"physical", name:"Aktywność fizyczna", items:[
+  { id:"physical", name:"Aktywność fizyczna", countAsOne:true, items:[
     { id:"strength", name:"Trening siłowy", type:"log", logFields:[
       { key:"exercise", label:"Ćwiczenie" }, { key:"weight", label:"Ciężar" }, { key:"reps", label:"Powtórzenia" },
     ]},
@@ -244,6 +244,26 @@ const CATEGORIES = [
   { id:"evening", name:"Wieczorna rutyna", items:[
     { id:"tea_candle", name:"Herbatka i świeczka", type:"note" },
     { id:"reading", name:"Czytanie książki", type:"note" },
+  ]},
+  { id:"boredom", name:"Co robić, gdy się nudzę?", items:[
+    { id:"bored_5min", name:"Mam 5 minut", type:"nested", editable:true, subItems:[
+      "Masaż szyi + olejek zapachowy",
+      "Kotek",
+    ]},
+    { id:"bored_15min", name:"Mam 15 minut", type:"nested", editable:true, subItems:[
+      "Nowy mocktail",
+      "Ćwiczenia oddechowe / akupresura",
+    ]},
+    { id:"bored_30min", name:"Mam 30 minut", type:"nested", editable:true, subItems:[
+      "Książka",
+      "Podcast i spacer",
+    ]},
+    { id:"bored_1h", name:"Mam 1h+", type:"nested", editable:true, subItems:[
+      "Badania nad psychodelikami",
+      "Nauka masażu i relaksacji połączonej z psychoterapią",
+      "Analiza danych i psychoterapia",
+      "Teoria gier planszowych lub obejrzenie nowej instrukcji i umówienie się na grę",
+    ]},
   ]},
   { id:"somatyka", name:"Somatyka", negative:true, items:[
     { id:"bol_glowy", name:"Ból głowy", type:"note" },
@@ -381,7 +401,7 @@ function computeDayNutrition(dateStr){
 const CATEGORY_HEX = {
   morning:"#D98B5A", physical:"#6E9B7A", meals:"#A9724A",
   growth:"#6C82A6", self_focus:"#9C86A8", social:"#C97288", evening:"#55647F",
-  somatyka:"#B25D4D", daily_routine:"#5D8A82",
+  somatyka:"#B25D4D", daily_routine:"#5D8A82", boredom:"#C9A66B",
 };
 const ALL_ITEMS = [];
 CATEGORIES.forEach(cat=>cat.items.forEach(it=>ALL_ITEMS.push({ ...it, catId:cat.id, catName:cat.name })));
@@ -403,12 +423,12 @@ function humanDateShort(dateStr){ return parseDateStr(dateStr).toLocaleDateStrin
    Firebase Console > Project Settings > General > Your apps > (ikona web </>)
    ============================================================================ */
 const firebaseConfig = {
-  apiKey: "AIzaSyAc2KGXuRsQwXnxFr4DjA9Hph3OEQZ7Z2E",
-  authDomain: "daily-plan-tracker-3ec06.firebaseapp.com",
-  projectId: "daily-plan-tracker-3ec06",
-  storageBucket: "daily-plan-tracker-3ec06.firebasestorage.app",
-  messagingSenderId: "863267659148",
-  appId: "1:863267659148:web:1a7d0d7724400f8c4dcaa9"
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: "",
 };
 
 /* ============================== FIREBASE INIT / AUTH ============================== */
@@ -547,8 +567,14 @@ function computeDayTotals(dayData){
   CATEGORIES.forEach(function(cat){
     let cDone=0;
     cat.items.forEach(function(item){ if(isItemDone(item,items[item.id])){cDone++;} });
-    perCategory[cat.id] = { done:cDone, total:cat.items.length, pct: cat.items.length? cDone/cat.items.length : 0 };
-    if(!cat.negative){ done += cDone; total += cat.items.length; }
+    if(cat.countAsOne){
+      const oneDone = cDone>0 ? 1 : 0;
+      perCategory[cat.id] = { done:cDone, total:cat.items.length, pct: oneDone };
+      if(!cat.negative){ done += oneDone; total += 1; }
+    } else {
+      perCategory[cat.id] = { done:cDone, total:cat.items.length, pct: cat.items.length? cDone/cat.items.length : 0 };
+      if(!cat.negative){ done += cDone; total += cat.items.length; }
+    }
   });
   return { done:done, total:total, pct: total? done/total : 0, perCategory:perCategory };
 }
@@ -708,7 +734,11 @@ function renderHabits(){
     return '<button class="rd-dayarc-seg" data-action="jump-cat" data-cat="'+cat.id+'" title="'+escapeHTML(cat.name)+'" style="background:'+CATEGORY_HEX[cat.id]+'22"><div class="rd-dayarc-fill" style="height:'+h+'%;background:'+CATEGORY_HEX[cat.id]+'"></div></button>';
   }).join('') + '</div>';
 
-  const habitTotals = HABIT_CATEGORIES.filter(function(cat){ return !cat.negative; }).reduce(function(acc,cat){ acc.done+=totals.perCategory[cat.id].done; acc.total+=totals.perCategory[cat.id].total; return acc; }, {done:0,total:0});
+  const habitTotals = HABIT_CATEGORIES.filter(function(cat){ return !cat.negative; }).reduce(function(acc,cat){
+    if(cat.countAsOne){ acc.done += totals.perCategory[cat.id].done>0 ? 1 : 0; acc.total += 1; }
+    else { acc.done += totals.perCategory[cat.id].done; acc.total += totals.perCategory[cat.id].total; }
+    return acc;
+  }, {done:0,total:0});
   html += '<div class="rd-daysummary">'+habitTotals.done+'/'+habitTotals.total+' zrealizowanych dziś</div>';
   HABIT_CATEGORIES.forEach(function(cat){ html += renderCategory(cat, dayData); });
   return html;
