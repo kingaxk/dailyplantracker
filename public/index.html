@@ -278,9 +278,9 @@ const CATEGORIES = [
     { id:"placzliwosc", name:"Płaczliwość", type:"note" },
     { id:"okres", name:"Okres", type:"note" },
     { id:"bol_brzucha", name:"Ból brzucha", type:"note" },
-    { id:"palenie", name:"Palenie", type:"counter" },
-    { id:"objadanie_sie", name:"Objadanie się", type:"counter" },
-    { id:"powstrzymywanie_podjadania", name:"Powstrzymywanie obżarstwa/podjadania", type:"counter" },
+    { id:"palenie", name:"Palenie", type:"note" },
+    { id:"objadanie_sie", name:"Objadanie się", type:"note" },
+    { id:"powstrzymywanie_podjadania", name:"Powstrzymywanie obżarstwa/podjadania", type:"note", hasCounter:true },
   ]},
 ];
 
@@ -926,7 +926,13 @@ function renderItemRow(item, data, color, isLast){
   }
 
   if(item.type==="note"){
-    let html = '<div style="'+dividerStyle+'"><div class="rd-row" style="border-bottom:none">' + checkBtn(true,"toggle-done") +
+    const counterHtml = item.hasCounter ?
+      '<span style="display:flex;align-items:center;gap:4px;flex-shrink:0">' +
+      '<button class="rd-qty-btn" data-action="counter-adjust" data-item="'+item.id+'" data-delta="-1">−</button>' +
+      '<span style="min-width:14px;text-align:center;font-size:13px;font-weight:700">'+(data.count||0)+'</span>' +
+      '<button class="rd-qty-btn" data-action="counter-adjust" data-item="'+item.id+'" data-delta="1">+</button>' +
+      '</span>' : '';
+    let html = '<div style="'+dividerStyle+'"><div class="rd-row" style="border-bottom:none">' + checkBtn(true,"toggle-done") + counterHtml +
       '<button class="rd-row-main" data-action="toggle-expand" data-item="'+item.id+'">' +
       '<span class="rd-row-name">'+escapeHTML(item.name)+'</span>' +
       '<span class="rd-row-right">' + (data.note ? '<span class="rd-note-dot"></span>' : '') +
