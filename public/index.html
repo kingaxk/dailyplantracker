@@ -825,14 +825,20 @@ function renderScheduleView(dayData){
     html += '<div class="rd-schedule-time">'+escapeHTML(row.hour)+'</div>';
     html += '<div class="rd-schedule-content">';
     if(row.isPhysicalPicker){
-      html += '<div style="padding:12px 14px 4px">';
-      html += '<p class="rd-hint" style="margin:0 0 8px">Trening — wybierz co robisz:</p>';
-      html += '</div>';
+      const selectedId = (physData.selectedActivityByHour && physData.selectedActivityByHour[row.hour]) || "";
+      html += '<div style="padding:12px 14px 10px">';
+      html += '<label class="rd-hint" style="display:block;margin-bottom:6px">Trening — wybierz aktywność:</label>';
+      html += '<select class="rd-select" style="width:100%;max-width:100%" data-action="set-schedule-physical" data-hour="'+row.hour+'"><option value="">— wybierz —</option>';
       const physCat = CATEGORIES.find(function(c){ return c.id==="physical"; });
-      physCat.items.forEach(function(pi, idx){
-        const pdata = items[pi.id] || {};
-        html += renderItemRow(pi, pdata, CATEGORY_HEX.physical, idx===physCat.items.length-1);
+      physCat.items.forEach(function(pi){
+        html += '<option value="'+pi.id+'" '+(selectedId===pi.id?'selected':'')+'>'+escapeHTML(pi.name)+'</option>';
       });
+      html += '</select></div>';
+      if(selectedId){
+        const selItem = physCat.items.find(function(pi){ return pi.id===selectedId; });
+        const selData = items[selectedId] || {};
+        if(selItem) html += renderItemRow(selItem, selData, CATEGORY_HEX.physical, true);
+      }
     } else {
       const color = CATEGORY_HEX[row.item.catId] || CATEGORY_HEX.morning;
       if(row.item.type==="recipe_meal"){
@@ -1917,6 +1923,16 @@ function handleClick(e){
 function handleChange(e){
   const el = e.target;
   const action = el.getAttribute && el.getAttribute("data-action");
+  if(action==="set-schedule-physical"){
+    const hour = el.getAttribute("data-hour");
+    const activityId = el.value;
+    updateDayItem(state.viewDate, "physical_choice", function(d){
+      const map = { ...(d.selectedActivityByHour||{}) };
+      if(activityId) map[hour] = activityId; else delete map[hour];
+      return { ...d, selectedActivityByHour: map };
+    });
+    render(); return;
+  }
   if(action==="meal-select"){
     const id = el.getAttribute("data-item");
     updateDayItem(state.viewDate, id, function(d){ return { ...d, mealValue: el.value }; });
