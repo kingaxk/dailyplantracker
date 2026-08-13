@@ -53,6 +53,8 @@
   .rd-schedule-row{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start;}
   .rd-schedule-time{flex-shrink:0;width:44px;font-family:'Fraunces',serif;font-weight:600;font-size:13px;color:var(--ink-soft);padding-top:13px;text-align:right;}
   .rd-schedule-content{flex:1;background:var(--bg-card);border-radius:12px;box-shadow:0 1px 3px rgba(43,51,40,0.06);overflow:hidden;min-width:0;}
+  .rd-schedule-remove{flex-shrink:0;width:32px;height:32px;margin-top:9px;border-radius:50%;border:none;background:none;color:var(--ink-soft);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+  .rd-schedule-remove:hover{color:var(--accent);background:var(--bg);}
 
   .rd-cat{margin-top:22px;}
   .rd-cat-head{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;padding:4px 0;cursor:pointer;}
@@ -276,6 +278,9 @@ const CATEGORIES = [
     { id:"placzliwosc", name:"Płaczliwość", type:"note" },
     { id:"okres", name:"Okres", type:"note" },
     { id:"bol_brzucha", name:"Ból brzucha", type:"note" },
+    { id:"palenie", name:"Palenie", type:"counter" },
+    { id:"objadanie_sie", name:"Objadanie się", type:"counter" },
+    { id:"powstrzymywanie_podjadania", name:"Powstrzymywanie obżarstwa/podjadania", type:"counter" },
   ]},
 ];
 
@@ -495,7 +500,7 @@ const DEFAULT_WEEKDAY_SCHEDULE = {
   breakfast: ["07:00"],
   reading: ["08:00","21:00"],
   tea_candle: ["08:00","21:00"],
-  strength: ["08:30","17:00"],
+  physical_choice: ["08:30","17:00"],
   coffee: ["10:00"],
   lunch: ["11:00"],
   dinner: ["15:00"],
@@ -571,6 +576,10 @@ function updateDayItem(dateStr, itemId, updater){
   const prevItems = day.items || {};
   const newData = updater(prevItems[itemId] || {});
   const meta = findItemMeta(itemId);
+  if(!meta){
+    pushRow(dateStr, itemId, "", "", false, "", newData);
+    return;
+  }
   const done = isItemDone(meta, newData);
   const note = meta.type==="note" ? (newData.note||"") : "";
   pushRow(dateStr, itemId, meta.catName, meta.name, done, note, newData);
@@ -588,6 +597,7 @@ function isItemDone(item,data){
     case "log": return !!(data.logEntries && data.logEntries.length>0);
     case "meal": return !!data.mealValue;
     case "recipe_meal": return !!(data && data.recipeId);
+    case "counter": return !!(data.count && data.count>0);
     default: return false;
   }
 }
@@ -798,6 +808,11 @@ function renderScheduleView(dayData){
     const hours = (actualHours !== undefined) ? actualHours : (template[item.id] || []);
     hours.forEach(function(h){ scheduled.push({ item:item, data:data, hour:h, fromTemplate: actualHours===undefined }); });
   });
+  const physData = items["physical_choice"] || {};
+  const physActualHours = physData.scheduledHours;
+  const physHours = (physActualHours !== undefined) ? physActualHours : (template["physical_choice"] || []);
+  physHours.forEach(function(h){ scheduled.push({ isPhysicalPicker:true, hour:h }); });
+
   scheduled.sort(function(a,b){ return a.hour.localeCompare(b.hour); });
 
   let html = '<div style="margin:10px 0;">';
@@ -805,17 +820,32 @@ function renderScheduleView(dayData){
     html += '<p class="rd-hint">Nic jeszcze nie zaplanowano na dziś. Dodaj pierwszą pozycję poniżej.</p>';
   }
   scheduled.forEach(function(row){
-    const color = CATEGORY_HEX[row.item.catId] || CATEGORY_HEX.morning;
+    const removeItemId = row.isPhysicalPicker ? "physical_choice" : row.item.id;
     html += '<div class="rd-schedule-row">';
     html += '<div class="rd-schedule-time">'+escapeHTML(row.hour)+'</div>';
     html += '<div class="rd-schedule-content">';
-    if(row.item.type==="recipe_meal"){
-      html += renderMealSlotRow(row.item, row.data, state.viewDate, "sched|"+row.item.id+"|"+row.hour, true);
+    if(row.isPhysicalPicker){
+      html += '<div style="padding:12px 14px 4px">';
+      html += '<p class="rd-hint" style="margin:0 0 8px">Trening — wybierz co robisz:</p>';
+      html += '</div>';
+      const physCat = CATEGORIES.find(function(c){ return c.id==="physical"; });
+      physCat.items.forEach(function(pi, idx){
+        const pdata = items[pi.id] || {};
+        html += renderItemRow(pi, pdata, CATEGORY_HEX.physical, idx===physCat.items.length-1);
+      });
     } else {
-      html += renderItemRow(row.item, row.data, color, true);
+      const color = CATEGORY_HEX[row.item.catId] || CATEGORY_HEX.morning;
+      if(row.item.type==="recipe_meal"){
+        html += renderMealSlotRow(row.item, row.data, state.viewDate, "sched|"+row.item.id+"|"+row.hour, true);
+      } else {
+        html += renderItemRow(row.item, row.data, color, true);
+      }
     }
-    html += '<button class="rd-hint" style="background:none;border:none;text-decoration:underline;cursor:pointer;padding:6px 14px 10px;font-size:12px" data-action="remove-from-schedule" data-item="'+row.item.id+'" data-hour="'+row.hour+'">Usuń z harmonogramu (godz. '+row.hour+')</button>';
-    html += '</div></div>';
+    html += '</div>';
+    html += '<button class="rd-schedule-remove" data-action="remove-from-schedule" data-item="'+removeItemId+'" data-hour="'+row.hour+'" title="Usuń z harmonogramu (godz. '+row.hour+')" aria-label="Usuń z harmonogramu">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg>' +
+      '</button>';
+    html += '</div>';
   });
   html += '</div>';
 
@@ -825,8 +855,9 @@ function renderScheduleView(dayData){
 
   if(state.schedulePendingItemId){
     const pendingItem = findItemMeta(state.schedulePendingItemId);
+    const pendingName = pendingItem ? pendingItem.name : (state.schedulePendingItemId==="physical_choice" ? "Trening (wybierz aktywność)" : "");
     html += '<div class="rd-nutrition-card">';
-    html += '<p class="rd-hint" style="margin:0 0 8px">Wybierz godzinę dla: <strong>'+escapeHTML(pendingItem?pendingItem.name:"")+'</strong></p>';
+    html += '<p class="rd-hint" style="margin:0 0 8px">Wybierz godzinę dla: <strong>'+escapeHTML(pendingName)+'</strong></p>';
     html += '<input type="time" id="schedule-time-input" value="08:00" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);margin-bottom:8px;">';
     html += '<button style="width:100%;padding:10px;border-radius:10px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-weight:700" data-action="confirm-schedule-time">Dodaj do harmonogramu</button>';
     html += '</div>';
@@ -834,14 +865,20 @@ function renderScheduleView(dayData){
     html += '<div class="rd-nutrition-card">';
     html += '<input type="text" placeholder="Szukaj aktywności lub posiłku…" value="'+escapeHTML(state.scheduleSearchQuery)+'" data-action="schedule-search-input" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);margin-bottom:10px;">';
     const q = state.scheduleSearchQuery.trim().toLowerCase();
-    const results = ALL_ITEMS.filter(function(it){ return !q || it.name.toLowerCase().indexOf(q)!==-1; }).slice(0,30);
+    const results = ALL_ITEMS.filter(function(it){ return it.catId!=="somatyka" && (!q || it.name.toLowerCase().indexOf(q)!==-1); }).slice(0,30);
+    const showPhysicalPicker = !q || "trening".indexOf(q)!==-1 || "aktywność fizyczna".indexOf(q)!==-1;
     html += '<div style="max-height:260px;overflow-y:auto;">';
+    if(showPhysicalPicker){
+      html += '<button class="rd-row" style="width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);cursor:pointer" data-action="pick-schedule-item" data-item="physical_choice">' +
+        '<span class="rd-row-name">Trening (wybierz aktywność)</span>' +
+        '<span class="rd-count-badge" style="margin-left:auto">Aktywność fizyczna</span></button>';
+    }
     results.forEach(function(it){
       html += '<button class="rd-row" style="width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);cursor:pointer" data-action="pick-schedule-item" data-item="'+it.id+'">' +
         '<span class="rd-row-name">'+escapeHTML(it.name)+'</span>' +
         '<span class="rd-count-badge" style="margin-left:auto">'+escapeHTML(it.catName)+'</span></button>';
     });
-    if(results.length===0) html += '<p class="rd-hint">Brak wyników.</p>';
+    if(results.length===0 && !showPhysicalPicker) html += '<p class="rd-hint">Brak wyników.</p>';
     html += '</div>';
     html += '<button class="rd-hint" style="background:none;border:none;text-decoration:underline;cursor:pointer;margin-top:8px" data-action="close-schedule-picker">Anuluj</button>';
     html += '</div>';
@@ -946,6 +983,17 @@ function renderItemRow(item, data, color, isLast){
     }
     html += '</div>';
     return html;
+  }
+
+  if(item.type==="counter"){
+    const count = data.count || 0;
+    return '<div class="rd-row" style="'+dividerStyle+'">' +
+      '<span class="rd-row-name">'+escapeHTML(item.name)+'</span>' +
+      '<span class="rd-row-right" style="display:flex;align-items:center;gap:8px">' +
+      '<button class="rd-qty-btn" data-action="counter-adjust" data-item="'+item.id+'" data-delta="-1">−</button>' +
+      '<span style="min-width:20px;text-align:center;font-weight:700">'+count+'</span>' +
+      '<button class="rd-qty-btn" data-action="counter-adjust" data-item="'+item.id+'" data-delta="1">+</button>' +
+      '</span></div>';
   }
 
   if(item.type==="recipe_meal"){
@@ -1752,6 +1800,15 @@ function handleClick(e){
       const newQty = Math.max(1, (cur.qty||1) + delta);
       addons[addonId] = { ...cur, qty: newQty };
       return { ...d, addons: addons };
+    });
+    render(); return;
+  }
+  if(action==="counter-adjust"){
+    const id = el.getAttribute("data-item");
+    const delta = parseInt(el.getAttribute("data-delta"),10);
+    updateDayItem(state.viewDate, id, function(d){
+      const newCount = Math.max(0, (d.count||0) + delta);
+      return { ...d, count: newCount };
     });
     render(); return;
   }
