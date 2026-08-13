@@ -50,6 +50,9 @@
   .rd-nutrition-kcal{font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--ink);text-align:center;margin-bottom:8px;}
   .rd-nutrition-macro{display:flex;justify-content:center;gap:16px;font-size:13px;color:var(--ink-soft);flex-wrap:wrap;}
   .rd-nutrition-macro b{color:var(--ink);}
+  .rd-schedule-row{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start;}
+  .rd-schedule-time{flex-shrink:0;width:44px;font-family:'Fraunces',serif;font-weight:600;font-size:13px;color:var(--ink-soft);padding-top:13px;text-align:right;}
+  .rd-schedule-content{flex:1;background:var(--bg-card);border-radius:12px;box-shadow:0 1px 3px rgba(43,51,40,0.06);overflow:hidden;min-width:0;}
 
   .rd-cat{margin-top:22px;}
   .rd-cat-head{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;padding:4px 0;cursor:pointer;}
@@ -203,6 +206,7 @@ const CATEGORIES = [
       "Masaż policzków",
     ]},
     { id:"pelvic_training", name:"Trening miednicy", type:"note" },
+    { id:"coffee", name:"Kawa", type:"note" },
   ]},
   { id:"physical", name:"Aktywność fizyczna", countAsOne:true, items:[
     { id:"strength", name:"Trening siłowy", type:"log", logFields:[
@@ -486,6 +490,32 @@ function getDayItems(dateStr){
   });
   return { items: items };
 }
+const DEFAULT_WEEKDAY_SCHEDULE = {
+  water: ["07:00"],
+  breakfast: ["07:00"],
+  reading: ["08:00","21:00"],
+  tea_candle: ["08:00","21:00"],
+  strength: ["08:30","17:00"],
+  coffee: ["10:00"],
+  lunch: ["11:00"],
+  dinner: ["15:00"],
+  supper: ["19:00"],
+  acupressure: ["21:00"],
+  neck_massage: ["21:00"],
+};
+function isWeekday(dateStr){
+  const d = new Date(dateStr+"T12:00:00");
+  const day = d.getDay();
+  return day>=1 && day<=5;
+}
+function getWeekdayTemplate(){
+  const r = rowIndexMap[keyFor("_config","weekday_schedule")];
+  if(r && r.ExtraJSON){
+    try{ const v = JSON.parse(r.ExtraJSON); if(v && typeof v==="object") return v; }catch(e){}
+  }
+  return DEFAULT_WEEKDAY_SCHEDULE;
+}
+
 function getEffectiveList(item){
   const defaultList = item.type==="meal" ? (item.options||[]) : (item.subItems||[]);
   if(!item.editable) return defaultList;
@@ -617,6 +647,11 @@ const state = {
   expandedAddonText: null,
   settingsStatus: "",
   manageListId: null,
+  habitsViewMode: "list", // "list" | "schedule"
+  schedulePickerOpen: false,
+  scheduleSearchQuery: "",
+  schedulePendingItemId: null,
+  expandedScheduleKey: null,
 };
 
 function getStableSelector(el){
@@ -728,6 +763,15 @@ function renderHabits(){
     '</div>' +
     '<button data-action="nav-date" data-dir="1">&#8250;</button></div>';
 
+  html += '<div class="rd-rangechips">' +
+    '<button class="rd-rangechip'+(state.habitsViewMode==="list"?" active":"")+'" data-action="set-habits-view" data-mode="list">Lista</button>' +
+    '<button class="rd-rangechip'+(state.habitsViewMode==="schedule"?" active":"")+'" data-action="set-habits-view" data-mode="schedule">Harmonogram</button>' +
+    '</div>';
+
+  if(state.habitsViewMode==="schedule"){
+    return html + renderScheduleView(dayData);
+  }
+
   html += '<div class="rd-dayarc">' + HABIT_CATEGORIES.filter(function(cat){ return !cat.negative; }).map(function(cat){
     const pct = totals.perCategory[cat.id].pct;
     const h = Math.max(pct*100,6);
@@ -741,6 +785,69 @@ function renderHabits(){
   }, {done:0,total:0});
   html += '<div class="rd-daysummary">'+habitTotals.done+'/'+habitTotals.total+' zrealizowanych dziś</div>';
   HABIT_CATEGORIES.forEach(function(cat){ html += renderCategory(cat, dayData); });
+  return html;
+}
+
+function renderScheduleView(dayData){
+  const items = dayData.items || {};
+  const template = isWeekday(state.viewDate) ? getWeekdayTemplate() : {};
+  const scheduled = [];
+  ALL_ITEMS.forEach(function(item){
+    const data = items[item.id] || {};
+    const actualHours = data.scheduledHours;
+    const hours = (actualHours !== undefined) ? actualHours : (template[item.id] || []);
+    hours.forEach(function(h){ scheduled.push({ item:item, data:data, hour:h, fromTemplate: actualHours===undefined }); });
+  });
+  scheduled.sort(function(a,b){ return a.hour.localeCompare(b.hour); });
+
+  let html = '<div style="margin:10px 0;">';
+  if(scheduled.length===0){
+    html += '<p class="rd-hint">Nic jeszcze nie zaplanowano na dziś. Dodaj pierwszą pozycję poniżej.</p>';
+  }
+  scheduled.forEach(function(row){
+    const color = CATEGORY_HEX[row.item.catId] || CATEGORY_HEX.morning;
+    html += '<div class="rd-schedule-row">';
+    html += '<div class="rd-schedule-time">'+escapeHTML(row.hour)+'</div>';
+    html += '<div class="rd-schedule-content">';
+    if(row.item.type==="recipe_meal"){
+      html += renderMealSlotRow(row.item, row.data, state.viewDate, "sched|"+row.item.id+"|"+row.hour, true);
+    } else {
+      html += renderItemRow(row.item, row.data, color, true);
+    }
+    html += '<button class="rd-hint" style="background:none;border:none;text-decoration:underline;cursor:pointer;padding:6px 14px 10px;font-size:12px" data-action="remove-from-schedule" data-item="'+row.item.id+'" data-hour="'+row.hour+'">Usuń z harmonogramu (godz. '+row.hour+')</button>';
+    html += '</div></div>';
+  });
+  html += '</div>';
+
+  if(isWeekday(state.viewDate)){
+    html += '<button class="rd-hint" style="background:none;border:none;text-decoration:underline;cursor:pointer;margin-bottom:12px;display:block" data-action="save-weekday-template">Zapisz ten dzień jako domyślny plan (pon–pt)</button>';
+  }
+
+  if(state.schedulePendingItemId){
+    const pendingItem = findItemMeta(state.schedulePendingItemId);
+    html += '<div class="rd-nutrition-card">';
+    html += '<p class="rd-hint" style="margin:0 0 8px">Wybierz godzinę dla: <strong>'+escapeHTML(pendingItem?pendingItem.name:"")+'</strong></p>';
+    html += '<input type="time" id="schedule-time-input" value="08:00" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);margin-bottom:8px;">';
+    html += '<button style="width:100%;padding:10px;border-radius:10px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-weight:700" data-action="confirm-schedule-time">Dodaj do harmonogramu</button>';
+    html += '</div>';
+  } else if(state.schedulePickerOpen){
+    html += '<div class="rd-nutrition-card">';
+    html += '<input type="text" placeholder="Szukaj aktywności lub posiłku…" value="'+escapeHTML(state.scheduleSearchQuery)+'" data-action="schedule-search-input" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);margin-bottom:10px;">';
+    const q = state.scheduleSearchQuery.trim().toLowerCase();
+    const results = ALL_ITEMS.filter(function(it){ return !q || it.name.toLowerCase().indexOf(q)!==-1; }).slice(0,30);
+    html += '<div style="max-height:260px;overflow-y:auto;">';
+    results.forEach(function(it){
+      html += '<button class="rd-row" style="width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);cursor:pointer" data-action="pick-schedule-item" data-item="'+it.id+'">' +
+        '<span class="rd-row-name">'+escapeHTML(it.name)+'</span>' +
+        '<span class="rd-count-badge" style="margin-left:auto">'+escapeHTML(it.catName)+'</span></button>';
+    });
+    if(results.length===0) html += '<p class="rd-hint">Brak wyników.</p>';
+    html += '</div>';
+    html += '<button class="rd-hint" style="background:none;border:none;text-decoration:underline;cursor:pointer;margin-top:8px" data-action="close-schedule-picker">Anuluj</button>';
+    html += '</div>';
+  } else {
+    html += '<button style="width:100%;padding:12px;border-radius:10px;border:1px dashed var(--line);background:none;color:var(--ink);cursor:pointer;font-weight:600" data-action="open-schedule-picker">+ Dodaj do harmonogramu</button>';
+  }
   return html;
 }
 
@@ -1505,6 +1612,60 @@ function handleClick(e){
     return;
   }
   if(action==="jump-date"){ state.viewDate = el.getAttribute("data-date"); state.activeTab="habits"; state.expandedItem=null; render(); return; }
+  if(action==="set-habits-view"){
+    state.habitsViewMode = el.getAttribute("data-mode");
+    state.schedulePickerOpen = false;
+    state.schedulePendingItemId = null;
+    state.scheduleSearchQuery = "";
+    render(); return;
+  }
+  if(action==="open-schedule-picker"){ state.schedulePickerOpen = true; state.scheduleSearchQuery = ""; render(); return; }
+  if(action==="close-schedule-picker"){ state.schedulePickerOpen = false; state.scheduleSearchQuery = ""; render(); return; }
+  if(action==="save-weekday-template"){
+    const dayData = getDayItems(state.viewDate);
+    const items = dayData.items || {};
+    const oldTemplate = getWeekdayTemplate();
+    const template = {};
+    ALL_ITEMS.forEach(function(item){
+      const data = items[item.id] || {};
+      const actualHours = data.scheduledHours;
+      const hours = (actualHours !== undefined) ? actualHours : (oldTemplate[item.id] || []);
+      if(hours.length) template[item.id] = hours;
+    });
+    pushRow("_config", "weekday_schedule", "", "", false, "", template);
+    render(); return;
+  }
+  if(action==="pick-schedule-item"){
+    state.schedulePendingItemId = el.getAttribute("data-item");
+    state.schedulePickerOpen = false;
+    render(); return;
+  }
+  if(action==="confirm-schedule-time"){
+    const timeInput = document.getElementById("schedule-time-input");
+    const timeVal = timeInput ? timeInput.value : "08:00";
+    const itemId = state.schedulePendingItemId;
+    if(itemId && timeVal){
+      updateDayItem(state.viewDate, itemId, function(d){
+        const template = isWeekday(state.viewDate) ? getWeekdayTemplate() : {};
+        const base = (d.scheduledHours !== undefined) ? d.scheduledHours : (template[itemId] || []);
+        const next = base.indexOf(timeVal)===-1 ? [...base, timeVal] : base;
+        return { ...d, scheduledHours: next };
+      });
+    }
+    state.schedulePendingItemId = null;
+    render(); return;
+  }
+  if(action==="remove-from-schedule"){
+    const itemId = el.getAttribute("data-item");
+    const hour = el.getAttribute("data-hour");
+    updateDayItem(state.viewDate, itemId, function(d){
+      const template = isWeekday(state.viewDate) ? getWeekdayTemplate() : {};
+      const base = (d.scheduledHours !== undefined) ? d.scheduledHours : (template[itemId] || []);
+      const next = base.filter(function(h){ return h!==hour; });
+      return { ...d, scheduledHours: next };
+    });
+    render(); return;
+  }
   if(action==="set-meal-mode"){
     state.mealMode = el.getAttribute("data-mode");
     state.expandedMealKey = null;
@@ -1752,6 +1913,9 @@ function handleInput(e){
     const dateStr = el.getAttribute("data-date") || state.viewDate;
     if(noteTimer) clearTimeout(noteTimer);
     noteTimer = setTimeout(function(){ updateDayItem(dateStr, mealKcalItemId, function(d){ return { ...d, manualKcal: val }; }); }, 600);
+  } else if(el.getAttribute && el.getAttribute("data-action")==="schedule-search-input"){
+    state.scheduleSearchQuery = el.value;
+    render();
   }
 }
 function handleBlur(e){
