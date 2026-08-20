@@ -51,7 +51,10 @@
   .rd-nutrition-macro{display:flex;justify-content:center;gap:16px;font-size:13px;color:var(--ink-soft);flex-wrap:wrap;}
   .rd-nutrition-macro b{color:var(--ink);}
   .rd-schedule-row{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start;}
-  .rd-schedule-time{flex-shrink:0;width:44px;font-family:'Fraunces',serif;font-weight:600;font-size:13px;color:var(--ink-soft);padding-top:13px;text-align:right;}
+  .rd-schedule-time{flex-shrink:0;width:44px;font-family:'Fraunces',serif;font-weight:600;font-size:13px;color:var(--ink-soft);padding-top:13px;text-align:right;background:none;border:none;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;}
+  .rd-schedule-time-edit{flex-shrink:0;width:78px;display:flex;flex-direction:column;gap:4px;padding-top:6px;}
+  .rd-schedule-time-edit input{width:100%;font-size:11px;padding:3px;border-radius:6px;border:1px solid var(--line);}
+  .rd-schedule-time-edit button{font-size:11px;padding:2px 4px;border-radius:6px;border:1px solid var(--line);background:var(--bg-card);cursor:pointer;}
   .rd-schedule-content{flex:1;background:var(--bg-card);border-radius:12px;box-shadow:0 1px 3px rgba(43,51,40,0.06);overflow:hidden;min-width:0;}
   .rd-schedule-remove{flex-shrink:0;width:32px;height:32px;margin-top:9px;border-radius:50%;border:none;background:none;color:var(--ink-soft);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
   .rd-schedule-remove:hover{color:var(--accent);background:var(--bg);}
@@ -228,6 +231,7 @@ const CATEGORIES = [
     { id:"lunch", name:"Lunch", type:"recipe_meal", mealTag:"lunch" },
     { id:"dinner", name:"Obiad", type:"recipe_meal", mealTag:"obiad" },
     { id:"supper", name:"Kolacja", type:"recipe_meal", mealTag:"kolacja" },
+    { id:"snacks", name:"Przekąski", type:"recipe_meal", mealTag:"przekaska" },
   ]},
   { id:"growth", name:"Rozwój osobisty i zawodowy", items:[
     { id:"book_science", name:"Czytanie książki popularnonaukowej", type:"note" },
@@ -395,7 +399,7 @@ function computeDayNutrition(dateStr){
     const mealData = dayItems[slotId];
     if(!mealData || !mealData.recipeId) return;
     anyMeal = true;
-    if(mealData.recipeId==="_kupne"){
+    if(mealData.recipeId==="_kupne" || mealData.recipeId==="_inne"){
       if(mealData.manualKcal){ kcal += mealData.manualKcal; }
       else { anyUnpriced = true; }
       return;
@@ -661,6 +665,7 @@ const state = {
   schedulePickerOpen: false,
   scheduleSearchQuery: "",
   schedulePendingItemId: null,
+  editingScheduleRow: null, // { itemId, hour } of the row whose time is being edited
   expandedScheduleKey: null,
 };
 
@@ -821,8 +826,17 @@ function renderScheduleView(dayData){
   }
   scheduled.forEach(function(row){
     const removeItemId = row.isPhysicalPicker ? "physical_choice" : row.item.id;
+    const isEditingTime = state.editingScheduleRow && state.editingScheduleRow.itemId===removeItemId && state.editingScheduleRow.hour===row.hour;
     html += '<div class="rd-schedule-row">';
-    html += '<div class="rd-schedule-time">'+escapeHTML(row.hour)+'</div>';
+    if(isEditingTime){
+      html += '<div class="rd-schedule-time-edit">' +
+        '<input type="time" id="schedule-edit-time-input" value="'+row.hour+'">' +
+        '<button data-action="confirm-move-schedule-hour" data-item="'+removeItemId+'" data-old-hour="'+row.hour+'" title="Zapisz">✓</button>' +
+        '<button data-action="cancel-move-schedule-hour" title="Anuluj">✕</button>' +
+        '</div>';
+    } else {
+      html += '<button class="rd-schedule-time" data-action="start-move-schedule-hour" data-item="'+removeItemId+'" data-hour="'+row.hour+'" title="Zmień godzinę">'+escapeHTML(row.hour)+'</button>';
+    }
     html += '<div class="rd-schedule-content">';
     if(row.isPhysicalPicker){
       const selectedId = (physData.selectedActivityByHour && physData.selectedActivityByHour[row.hour]) || "";
@@ -1124,7 +1138,7 @@ function renderFullRecipeText(recipe, variants){
 
 function mealSlotLabel(data){
   if(data.recipeId==="_kupne") return "Kupne"+(data.manualKcal?" ("+data.manualKcal+" kcal)":"");
-  if(data.recipeId==="_inne") return "Inne"+(data.note?": "+data.note:"");
+  if(data.recipeId==="_inne") return "Inne"+(data.note?": "+data.note:"")+(data.manualKcal?" ("+data.manualKcal+" kcal)":"");
   if(data.recipeId){ const r = findRecipe(data.recipeId); if(r) return r.name; }
   return "— wybierz —";
 }
@@ -1143,8 +1157,8 @@ function renderMealSlotInner(item, data, dateStr){
   if(isSpecial){
     html += '<textarea class="rd-textarea" rows="2" placeholder="'+(data.recipeId==="_kupne"?"Co dokładnie kupione?":"Co to za posiłek?")+'" data-meal-note-item="'+item.id+'" data-date="'+dateStr+'">'+escapeHTML(data.note||"")+'</textarea>';
   }
-  if(data.recipeId==="_kupne"){
-    html += '<label class="rd-hint" style="display:block;margin:8px 0 4px">Kcal (jeśli znasz, np. z opakowania)</label>' +
+  if(data.recipeId==="_kupne" || data.recipeId==="_inne"){
+    html += '<label class="rd-hint" style="display:block;margin:8px 0 4px">Kcal (jeśli znasz)</label>' +
       '<input type="number" inputmode="numeric" class="rd-select" style="width:100%;max-width:100%" placeholder="np. 450" value="'+(data.manualKcal||"")+'" data-meal-kcal-item="'+item.id+'" data-date="'+dateStr+'">';
   }
   if(data.recipeId==="_inne"){
@@ -1252,7 +1266,7 @@ function renderNutritionCard(n){
     '<span><b>W</b> '+Math.round(n.carbs)+'g</span>' +
     '<span><b>T</b> '+Math.round(n.fat)+'g</span>' +
     '</div>';
-  if(n.anyUnpriced) html += '<div class="rd-hint" style="margin-top:6px">Nie wszystkie posiłki "Kupne" mają wpisane kcal — dodaj je w szczegółach posiłku, żeby uwzględnić w sumie.</div>';
+  if(n.anyUnpriced) html += '<div class="rd-hint" style="margin-top:6px">Nie wszystkie posiłki "Kupne"/"Inne" mają wpisane kcal — dodaj je w szczegółach posiłku, żeby uwzględnić w sumie.</div>';
   html += '</div>';
   return html;
 }
@@ -1487,7 +1501,7 @@ function renderDashboard(){
 }
 
 /* ============================== SHOPPING LIST VIEW ============================== */
-const MEAL_SLOT_IDS = ["breakfast","lunch","dinner","supper"];
+const MEAL_SLOT_IDS = ["breakfast","lunch","dinner","supper","snacks"];
 
 // Defensive fallback: if an ingredient ever ends up using a spoon/cup unit
 // (instead of the canonical g/ml from recipes-data.js), convert it to ml here
@@ -1713,6 +1727,38 @@ function handleClick(e){
       });
     }
     state.schedulePendingItemId = null;
+    render(); return;
+  }
+  if(action==="start-move-schedule-hour"){
+    state.editingScheduleRow = { itemId: el.getAttribute("data-item"), hour: el.getAttribute("data-hour") };
+    render(); return;
+  }
+  if(action==="cancel-move-schedule-hour"){
+    state.editingScheduleRow = null;
+    render(); return;
+  }
+  if(action==="confirm-move-schedule-hour"){
+    const itemId = el.getAttribute("data-item");
+    const oldHour = el.getAttribute("data-old-hour");
+    const input = document.getElementById("schedule-edit-time-input");
+    const newHour = input ? input.value : oldHour;
+    state.editingScheduleRow = null;
+    if(newHour && newHour!==oldHour){
+      updateDayItem(state.viewDate, itemId, function(d){
+        const template = isWeekday(state.viewDate) ? getWeekdayTemplate() : {};
+        const base = (d.scheduledHours !== undefined) ? d.scheduledHours : (template[itemId] || []);
+        const next = base.filter(function(h){ return h!==oldHour; });
+        if(next.indexOf(newHour)===-1) next.push(newHour);
+        const nd = { ...d, scheduledHours: next };
+        if(itemId==="physical_choice" && d.selectedActivityByHour && d.selectedActivityByHour[oldHour]){
+          const map = { ...d.selectedActivityByHour };
+          map[newHour] = map[oldHour];
+          delete map[oldHour];
+          nd.selectedActivityByHour = map;
+        }
+        return nd;
+      });
+    }
     render(); return;
   }
   if(action==="remove-from-schedule"){

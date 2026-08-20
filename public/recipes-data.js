@@ -21,6 +21,38 @@
 // Ingredients: {name, amount, unit}. Amounts are per the recipe's stated `portions`.
 // variantGroups: single-select choice groups (a "Brak"/none option means optional).
 const RECIPES = [
+  { id:"zupa_kukurydziana", name:"Zupa kukurydziana", meals:["obiad","lunch","kolacja"], portions:1,
+    addonTags:["do_zup"],
+    description:"Słodkawa, kremowa zupa z kukurydzy — ziemniak zblendowany w środku daje jej gęstość bez dodawania śmietany, a mleczko kokosowe delikatną, orzechową nutę.",
+    instructions:[
+      "Na oliwie zeszklij cebulę z czosnkiem.",
+      "Dodaj kukurydzę i pokrojonego w kostkę ziemniaka, smaż razem 2-3 minuty.",
+      "Zalej bulionem i gotuj pod przykryciem ok. 15 minut, aż ziemniak zmięknie.",
+      "Zblenduj całość na gładki krem (jeśli lubisz z kawałkami, zostaw 2-3 łyżki kukurydzy przed blendowaniem i dodaj z powrotem na koniec).",
+      "Dodaj mleczko kokosowe i wędzoną paprykę, podgrzej, dopraw solą i pieprzem.",
+      "Podawaj z wybranym białkiem na wierzchu."
+    ],
+    fixed:[
+      {name:"Kukurydza",amount:130,unit:"g"},
+      {name:"Ziemniak",amount:100,unit:"g"},
+      {name:"Cebula",amount:50,unit:"g"},
+      {name:"Czosnek",amount:2,unit:"ząbek"},
+      {name:"Bulion warzywny",amount:400,unit:"ml"},
+      {name:"Mleczko kokosowe (light)",amount:70,unit:"ml"},
+      {name:"Oliwa z oliwek",amount:10,unit:"g"},
+      {name:"Wędzona papryka (przyprawa)",amount:1,unit:"szczypta"},
+      {name:"Sól",amount:1,unit:"szczypta"},
+      {name:"Pieprz",amount:1,unit:"szczypta"},
+    ],
+    variantGroups:[
+      { id:"bialko", label:"Białko", options:[
+        { id:"ciecierzyca", label:"Ciecierzyca prażona", ingredients:[{name:"Ciecierzyca prażona",amount:55,unit:"g"}] },
+        { id:"tofu", label:"Tofu wędzone", ingredients:[{name:"Tofu wędzone",amount:70,unit:"g"}] },
+        { id:"mozzarella", label:"Mozzarella", ingredients:[{name:"Mozzarella",amount:42,unit:"g"}] },
+        { id:"halloumi", label:"Halloumi", ingredients:[{name:"Ser halloumi",amount:33,unit:"g"}] },
+      ]},
+    ],
+  },
   { id:"zupa_papryka", name:"Zupa z pieczonej papryki", meals:["obiad","lunch","kolacja"], portions:1,
     addonTags:["do_zup"],
     description:"Słodkawa, dymna zupa z pieczonej papryki — ziemniak zblendowany w środku daje jej aksamitną, gęstą konsystencję bez dodawania śmietany.",
@@ -47,6 +79,8 @@ const RECIPES = [
       { id:"bialko", label:"Białko", options:[
         { id:"ciecierzyca", label:"Ciecierzyca prażona", ingredients:[{name:"Ciecierzyca prażona",amount:55,unit:"g"}] },
         { id:"tofu", label:"Tofu wędzone", ingredients:[{name:"Tofu wędzone",amount:70,unit:"g"}] },
+        { id:"mozzarella", label:"Mozzarella", ingredients:[{name:"Mozzarella",amount:42,unit:"g"}] },
+        { id:"halloumi", label:"Halloumi", ingredients:[{name:"Ser halloumi",amount:33,unit:"g"}] },
       ]},
     ],
   },
@@ -118,6 +152,8 @@ const RECIPES = [
       {name:"Mozzarella (starta)",amount:35,unit:"g"},
       {name:"Napój sojowy",amount:35,unit:"ml"},
       {name:"Oliwa z oliwek",amount:6,unit:"g"},
+      {name:"Sól",amount:1,unit:"szczypta"},
+      {name:"Pieprz",amount:1,unit:"szczypta"},
     ],
     variantGroups:[],
   },
@@ -227,7 +263,7 @@ const RECIPES = [
       "Na oliwie zeszklij cebulę z czosnkiem.",
       "Dodaj pokrojoną dynię, zalej bulionem i gotuj pod przykryciem ok. 15-20 minut, aż dynia zmięknie.",
       "Zblenduj całość na gładki krem.",
-      "Dodaj mleczko kokosowe, podgrzej, dopraw solą i pieprzem.",
+      "Dodaj mleczko kokosowe i gałkę muszkatołową, podgrzej, dopraw solą i pieprzem.",
       "Podawaj posypaną pestkami dyni (opcjonalnie) i wybranym białkiem — chrupiące, sycące wykończenie."
     ],
     fixed:[
@@ -236,12 +272,17 @@ const RECIPES = [
       {name:"Czosnek",amount:1,unit:"ząbek"},
       {name:"Bulion warzywny",amount:465,unit:"ml"},
       {name:"Mleczko kokosowe (light)",amount:70,unit:"ml"},
-      {name:"Oliwa z oliwek",amount:20,unit:"g"},
+      {name:"Oliwa z oliwek",amount:15,unit:"g"},
+      {name:"Gałka muszkatołowa",amount:1,unit:"szczypta"},
+      {name:"Sól",amount:1,unit:"szczypta"},
+      {name:"Pieprz",amount:1,unit:"szczypta"},
     ],
     variantGroups:[
       { id:"bialko", label:"Białko", options:[
         { id:"ciecierzyca", label:"Ciecierzyca prażona", ingredients:[{name:"Ciecierzyca prażona",amount:55,unit:"g"}] },
         { id:"tofu", label:"Tofu wędzone", ingredients:[{name:"Tofu wędzone",amount:70,unit:"g"}] },
+        { id:"mozzarella", label:"Mozzarella", ingredients:[{name:"Mozzarella",amount:42,unit:"g"}] },
+        { id:"halloumi", label:"Halloumi", ingredients:[{name:"Ser halloumi",amount:33,unit:"g"}] },
       ]},
       { id:"pestki", label:"Pestki dyni (opcjonalnie)", options:[
         { id:"brak", label:"Bez", ingredients:[] },
@@ -330,6 +371,8 @@ const RECIPES = [
       {name:"Mozzarella (starta)",amount:35,unit:"g"},
       {name:"Czosnek",amount:1,unit:"ząbek"},
       {name:"Olej roślinny",amount:14,unit:"g"},
+      {name:"Sól",amount:1,unit:"szczypta"},
+      {name:"Pieprz",amount:1,unit:"szczypta"},
     ],
     variantGroups:[
       { id:"serek", label:"Serek wiejski (opcjonalnie)", options:[
@@ -411,24 +454,32 @@ const RECIPES = [
       ]},
     ],
   },
-  { id:"owsianka_marchew", name:"Owsianka z marchewką i rodzynkami", meals:["sniadanie","lunch","kolacja"], portions:1,
+  { id:"owsianka_marchew", name:"Owsianka z marchewką lub burakiem", meals:["sniadanie","lunch","kolacja"], portions:1,
     addonTags:[],
-    description:"Owsianka w stylu \"carrot cake\" — słodka, korzenna i sycąca dzięki startej marchewce i rodzynkom. Świetna na chłodniejsze poranki.",
+    description:"Owsianka w stylu \"carrot cake\" — do wyboru z tartą marchewką (klasyczna, z masłem orzechowym) lub z burakiem (ziemista, z podwójną porcją orzechów/migdałów).",
     instructions:[
       "Do rondelka wsyp płatki owsiane, zalej wybraną bazą płynną i wymieszaj.",
-      "Dodaj startą marchewkę, wybrany dodatek słodko-owocowy i szczyptę cynamonu.",
-      "Gotuj na małym ogniu, mieszając od czasu do czasu, przez ok. 5-7 minut, aż owsianka zgęstnieje, a marchewka zmięknie.",
-      "Zdejmij z ognia i wmieszaj łyżkę masła orzechowego.",
-      "Podawaj posypaną posiekanymi orzechami."
+      "Dodaj wybrane warzywo (startą marchewkę lub buraka), wybrany dodatek słodko-owocowy i szczyptę cynamonu.",
+      "Gotuj na małym ogniu, mieszając od czasu do czasu, przez ok. 5-7 minut, aż owsianka zgęstnieje, a warzywo zmięknie.",
+      "Jeśli wybrałaś wersję z marchewką, zdejmij z ognia i wmieszaj masło orzechowe.",
+      "Podawaj posypaną posiekanymi orzechami/migdałami."
     ],
     fixed:[
       {name:"Płatki owsiane",amount:45,unit:"g"},
-      {name:"Marchew (starta)",amount:90,unit:"g"},
-      {name:"Orzechy włoskie (posiekane)",amount:9,unit:"g"},
-      {name:"Masło orzechowe",amount:9,unit:"g"},
       {name:"Cynamon",amount:1,unit:"szczypta"},
     ],
     variantGroups:[
+      { id:"warzywo", label:"Warzywo", options:[
+        { id:"marchew", label:"Marchewka (z masłem orzechowym)", ingredients:[
+          {name:"Marchew (starta)",amount:90,unit:"g"},
+          {name:"Masło orzechowe",amount:9,unit:"g"},
+          {name:"Orzechy włoskie lub migdały (posiekane)",amount:9,unit:"g"},
+        ]},
+        { id:"burak", label:"Burak (z orzechami/migdałami)", ingredients:[
+          {name:"Burak (starty)",amount:90,unit:"g"},
+          {name:"Orzechy włoskie lub migdały (posiekane)",amount:18,unit:"g"},
+        ]},
+      ]},
       { id:"baza", label:"Baza płynna", options:[
         { id:"owsiany", label:"Napój owsiany", ingredients:[{name:"Napój owsiany",amount:230,unit:"ml"}] },
         { id:"sojowy", label:"Napój sojowy", ingredients:[{name:"Napój sojowy",amount:230,unit:"ml"}] },
@@ -617,7 +668,7 @@ const RECIPES = [
       ]},
       { id:"tuning", label:"Chrupiący tuning (opcjonalnie)", options:[
         { id:"brak", label:"Bez", ingredients:[] },
-        { id:"orzechy", label:"Orzechy włoskie / migdały", ingredients:[{name:"Orzechy włoskie lub migdały",amount:25,unit:"g"}] },
+        { id:"orzechy", label:"Orzechy włoskie / migdały", ingredients:[{name:"Orzechy włoskie lub migdały",amount:15,unit:"g"}] },
       ]},
     ],
   },
@@ -716,6 +767,8 @@ const RECIPES = [
       {name:"Bułka tarta",amount:19,unit:"g"},
       {name:"Oliwa lub olej",amount:1,unit:"łyżeczka"},
       {name:"Ryż",amount:50,unit:"g"},
+      {name:"Sól",amount:1,unit:"szczypta"},
+      {name:"Pieprz",amount:1,unit:"szczypta"},
     ],
     variantGroups:[],
   },
@@ -939,6 +992,8 @@ const ADDONS = [
 const MEAL_TAG_LABELS = { sniadanie:"Śniadanie", lunch:"Lunch", obiad:"Obiad", kolacja:"Kolacja" };
 const NUTRITION_DB = {
   "bakłażan": [1, 6, 0.2],
+  "burak": [1.6, 10, 0.2],
+  "burak (starty)": [1.6, 10, 0.2],
   "banan": [1.1, 23, 0.3],
   "banan (mrożony)": [1.1, 23, 0.3],
   "batat": [1.6, 20, 0.1],
@@ -1041,6 +1096,7 @@ const NUTRITION_DB = {
   "orzechy posiekane": [15, 16, 55],
   "orzechy włoskie (posiekane)": [15, 14, 65],
   "orzechy włoskie lub migdały": [15, 14, 60],
+  "orzechy włoskie lub migdały (posiekane)": [15, 14, 62],
   "owoce (maliny/borówki)": [1, 12, 0.4],
   "owoce (maliny/borówki/truskawki)": [1, 10, 0.4],
   "owoce mrożone (jagody/mango)": [0.8, 14, 0.3],
@@ -1087,6 +1143,8 @@ const NUTRITION_DB = {
   "szpinak baby": [2.9, 3.6, 0.4],
   "szpinak świeży": [2.9, 3.6, 0.4],
   "sól": [0, 0, 0],
+  "pieprz": [0, 0, 0],
+  "gałka muszkatołowa": [0, 1, 0.5],
   "tempeh": [19, 9, 11],
   "tofu naturalne": [8, 2, 4.5],
   "tofu wędzone": [16, 2, 8],
